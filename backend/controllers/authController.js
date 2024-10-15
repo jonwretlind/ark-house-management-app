@@ -4,6 +4,13 @@ import User from '../models/User.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Ensure you have the register function defined
+export const register = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  // Your logic for user registration
+};
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
