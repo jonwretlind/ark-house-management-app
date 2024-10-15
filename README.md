@@ -150,13 +150,6 @@ This **application** is designed to manage a **sober living home** with two dist
 4. **Point Tracking**:
    - The resident can view their updated **account balance** based on the tasks they’ve completed and the points awarded.
 
----
-
-### **Conclusion**:
-
-This application streamlines the management of tasks in a **sober living home**, ensuring that tasks are completed efficiently while providing a **gamified reward system** through points. **Administrators** can effectively manage tasks and monitor progress, while **residents** have a clear, structured system to follow. The combination of **user authentication**, **task management**, and **notifications** ensures accountability and communication between residents and administrators, making the system robust and easy to manage.
-
-Let me know if you need further clarifications or adjustments to any features! 💻👾
 
 ---
 
@@ -227,6 +220,9 @@ Let me know if you need further clarifications or adjustments to any features! �
 - The backend is structured with separate concerns for **user management**, **task management**, and **authentication**.
 - The frontend structure can be enhanced based on the complexity of the user interface, but this structure provides a good starting point for admin dashboards and resident task management.
 
-Let me know if you need further adjustments or specific code implementations for any part of this project! 💻👾
-
 ---
+
+### **Conclusion**:
+
+This application streamlines the management of tasks in a **sober living home**, ensuring that tasks are completed efficiently while providing a **gamified reward system** through points. **Administrators** can effectively manage tasks and monitor progress, while **residents** have a clear, structured system to follow. The combination of **user authentication**, **task management**, and **notifications** ensures accountability and communication between residents and administrators, making the system robust and easy to manage.
+
