@@ -40,70 +40,75 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 </pre>
 
-## Available Scripts
 
-In the project directory, you can run:
+### **Explanation of Key Directories and Files**:
 
-### `npm start`
+#### **Backend (`/backend`)**:
+1. **`controllers/`**:
+   - **`authController.js`**: Handles user registration, login, and JWT token generation.
+   - **`taskController.js`**: Handles CRUD operations for tasks, task assignment, completion, and verification by admins.
+  
+2. **`middleware/`**:
+   - **`authMiddleware.js`**: Middleware for JWT verification to protect routes, and checking admin permissions.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+3. **`models/`**:
+   - **`User.js`**: Mongoose schema for users, including name, email, password, phone (SMS), account balance (points), and admin role.
+   - **`Task.js`**: Mongoose schema for tasks, including task details, point value, assignment, and completion/verification status.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+4. **`routes/`**:
+   - **`authRoutes.js`**: Routes for user registration and login.
+   - **`taskRoutes.js`**: Routes for CRUD operations (admin) and task completion (non-admin).
 
-### `npm test`
+5. **`nodemailer.js`**: (Optional) Handles sending email notifications when tasks are completed (can be used in `taskController`).
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+6. **`.env`**: Environment variables (e.g., `JWT_SECRET`, `MONGO_URI`).
 
-### `npm run build`
+7. **`server.js`**:
+   - Entry point of the Express server.
+   - Sets up routes and middleware.
+   - Connects to the MongoDB database.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### **Frontend (`/frontend`)** [If Applicable]:
+1. **`components/`**:
+   - **`AdminDashboard.js`**: Admin view for managing tasks and users.
+   - **`TaskList.js`**: Non-admin view of tasks available to the user for completion.
+  
+2. **`pages/`**:
+   - **`Login.js`**: Page for logging in with email and password.
+   - **`Register.js`**: Page for signing up as a new user.
+   - **`TaskDetails.js`**: Page where a user can view, check out, and complete tasks.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+3. **`App.js`**:
+   - Main component that manages routes and renders different components based on user roles (admin vs non-admin).
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### **Key Features**:
+1. **User Authentication**:
+   - Users can register and log in, receiving a JWT token for authentication.
+   - JWT is used to protect routes and check admin permissions.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+2. **Task Management**:
+   - **Admins** can create, update, delete, and verify tasks.
+   - **Non-admins (residents)** can sign up for tasks, complete them, and receive points once the admin verifies completion.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+3. **Notifications**:
+   - Email or SMS notifications can be triggered to alert the admin when a task is marked as complete (handled via **Nodemailer** or **Twilio**).
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+4. **Protected Routes**:
+   - Tasks and user management routes are protected using the JWT-based `authenticateToken` middleware and the `authenticateAdmin` middleware for admin-only access.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### **Final Notes**:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- The backend is structured with separate concerns for **user management**, **task management**, and **authentication**.
+- The frontend structure can be enhanced based on the complexity of the user interface, but this structure provides a good starting point for admin dashboards and resident task management.
 
-### Code Splitting
+Let me know if you need further adjustments or specific code implementations for any part of this project! 💻👾
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-
+[Try this new GPT!](https://f614.short.gy/Code)
