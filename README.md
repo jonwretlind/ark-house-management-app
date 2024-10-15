@@ -3,60 +3,40 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 <pre>
-.
-├── /frontend/                 # ReactJS + Material-UI (Frontend)
-│   ├── public/                # Public files (HTML, favicon, etc.)
-│   │   ├── index.html         # Main HTML file
-│   │   └── favicon.ico        # Favicon
-│   │
-│   ├── src/                   # ReactJS source files
-│   │   ├── components/        # Reusable React components (TaskList, Leaderboard, etc.)
-│   │   │   ├── TaskList.js    # Component for listing tasks
-│   │   │   └── Leaderboard.js # Component for displaying leaderboard
-│   │   │
-│   │   ├── pages/             # ReactJS pages for routing
-│   │   │   ├── Dashboard.js   # Resident's task dashboard
-│   │   │   ├── Login.js       # User login page
-│   │   │   └── Leaderboard.js # Leaderboard page
-│   │   │
-│   │   ├── App.js             # Main React app component
-│   │   ├── index.js           # Entry point for React app
-│   │   ├── theme.js           # Custom Material-UI theme
-│   │   └── styles/            # CSS styles (if needed)
-│   │
-│   ├── package.json           # Project dependencies and scripts
-│   └── package-lock.json      # Exact versions of installed dependencies
-│
-├── /backend/                  # Node.js + Express (Backend API)
-│   ├── controllers/           # Logic to handle route logic (tasks, auth, leaderboard)
-│   │   ├── authController.js  # Controller for authentication (register, login)
-│   │   ├── taskController.js  # Controller for task management
-│   │   └── leaderboardController.js # Controller for leaderboard logic
-│   │
-│   ├── middleware/            # Middleware functions
-│   │   └── authMiddleware.js  # JWT authentication middleware
-│   │
-│   ├── models/                # Mongoose schemas for MongoDB
-│   │   ├── User.js            # User schema (admin/resident)
-│   │   ├── Task.js            # Task schema
-│   │   └── Leaderboard.js     # Leaderboard schema
-│   │
-│   ├── routes/                # API routes for Express
-│   │   ├── auth.js            # Routes for authentication (register, login)
-│   │   ├── task.js            # Routes for tasks (create, complete)
-│   │   └── leaderboard.js     # Routes for leaderboard (view leaderboard)
-│   │
-│   ├── services/              # Business logic services (wallet, leaderboard)
-│   │   ├── leaderboardService.js # Leaderboard calculation and reset service
-│   │   └── walletService.js   # Cryptocurrency-related logic (optional)
-│   │
-│   ├── .env                   # Environment variables (MongoDB URI, JWT secret)
-│   ├── server.js              # Main entry point for the Node.js server
-│   ├── package.json           # Project dependencies and scripts
-│   └── package-lock.json      # Exact versions of installed dependencies
-│
-├── .gitignore                 # List of files to ignore in version control
-└── README.md                  # Documentation for the project
+├── /backend/                       # Root folder for the backend
+│   ├── controllers/               # Contains all the controller files
+│   │   ├── authController.js      # Handles user registration, login, and authentication
+│   │   ├── taskController.js      # Handles CRUD operations for tasks and task verification
+│   ├── middleware/                # Contains the JWT authentication middleware
+│   │   ├── authMiddleware.js      # Middleware to verify JWT and protect routes
+│   ├── models/                    # Contains the Mongoose models
+│   │   ├── User.js                # User schema with permissions and account balance
+│   │   ├── Task.js                # Task schema for tasks assigned to users
+│   ├── routes/                    # Express route handlers
+│   │   ├── authRoutes.js          # Routes for user registration and login
+│   │   ├── taskRoutes.js          # Routes for task management (admin and non-admin users)
+│   ├── .env                       # Environment variables (JWT secret, MongoDB URI, etc.)
+│   ├── package.json               # NPM dependencies and scripts
+│   ├── server.js                  # Entry point of the backend server (Express)
+│   ├── README.md                  # Documentation for backend functionality
+└── └── nodemailer.js              # Optional: Nodemailer configuration for email notifications
+
+/frontend/                         # Root folder for the React frontend
+│   ├── src/                       # Contains source files for React
+│   │   ├── components/            # React components
+│   │   │   ├── AdminDashboard.js  # Admin dashboard for managing tasks and users
+│   │   │   ├── TaskList.js        # List of tasks for non-admin users
+│   │   ├── pages/                 # Pages for different routes in the app
+│   │   │   ├── Login.js           # Login page for user authentication
+│   │   │   ├── Register.js        # Registration page for user sign-up
+│   │   │   ├── TaskDetails.js     # Task details and completion page
+│   │   ├── App.js                 # Main entry point of the React app
+│   │   ├── index.js               # React DOM rendering
+│   ├── public/                    # Public files (index.html, assets)
+│   │   ├── index.html             # Entry HTML file for the React app
+│   ├── package.json               # NPM dependencies and scripts for frontend
+└── └── README.md                  # Documentation for the frontend functionality
+
 
 </pre>
 
