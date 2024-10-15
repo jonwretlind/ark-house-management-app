@@ -1,15 +1,53 @@
 // models/User.js
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'resident'], required: true },
-  points: { type: Number, default: 0 },
-  cryptoWalletAddress: { type: String, required: true },
-  tasksCompleted: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  phone: {
+    type: String,  // For SMS notifications
+    required: true,
+  },
+  passwordHash: {
+    type: String,
+    required: true,
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false,  // Default is non-admin user (resident)
+  },
+  accountBalance: {
+    type: Number,
+    default: 0,  // User's accumulated points
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
+
+// Password hashing pre-save hook
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('passwordHash')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+  next();
+});
+
+// Compare password method
+userSchema.methods.comparePassword = async function (password) {
+  return bcrypt.compare(password, this.passwordHash);
+};
 
 const User = mongoose.model('User', userSchema);
 
