@@ -1,31 +1,22 @@
-// server.js
 import express from 'express';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';  // Import authentication routes
-import { authenticateToken } from './middleware/authMiddleware.js';  // Import JWT authentication middleware
+import cors from 'cors';
+import cookieParser from 'cookie-parser';  // Import cookie-parser
+import mongoose from 'mongoose';
+import authRoutes from './routes/authRoutes';
 
 dotenv.config();
 
 const app = express();
-
-// Middleware to parse JSON bodies
+app.use(cors({ credentials: true, origin: 'http://localhost:5173' }));  // Enable CORS for frontend
 app.use(express.json());
+app.use(cookieParser());  // Enable cookie parsing
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch((error) => console.log('MongoDB connection error:', error));
-
-// Auth routes
 app.use('/api/auth', authRoutes);
 
-// Example protected route
-app.get('/api/protected', authenticateToken, (req, res) => {
-  res.status(200).json({ message: `Welcome, ${req.user.email}!`, user: req.user });
-});
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch((error) => console.error('MongoDB connection error:', error));
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -1,19 +1,16 @@
-// routes/taskRoutes.js
 import express from 'express';
+import { 
+  createTask, getAllTasks, getTaskById, updateTask, deleteTask 
+} from '../controllers/taskController.js';
 import { authenticateToken, authenticateAdmin } from '../middleware/authMiddleware.js';
-import { createTask, updateTask, deleteTask, completeTask, verifyTask } from '../controllers/taskController.js';
 
 const router = express.Router();
 
-// Admin routes (Create, update, delete tasks)
+// CRUD operations
 router.post('/', authenticateToken, authenticateAdmin, createTask);
-router.put('/:taskId', authenticateToken, authenticateAdmin, updateTask);
-router.delete('/:taskId', authenticateToken, authenticateAdmin, deleteTask);
-
-// Non-admin (resident) routes (Sign up for tasks, complete tasks)
-router.put('/complete/:taskId', authenticateToken, completeTask);
-
-// Admin route to verify completed tasks
-router.put('/verify/:taskId', authenticateToken, authenticateAdmin, verifyTask);
+router.get('/', authenticateToken, authenticateAdmin, getAllTasks);
+router.get('/:id', authenticateToken, authenticateAdmin, getTaskById);
+router.put('/:id', authenticateToken, authenticateAdmin, updateTask);
+router.delete('/:id', authenticateToken, authenticateAdmin, deleteTask);
 
 export default router;
