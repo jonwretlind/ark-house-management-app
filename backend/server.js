@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import taskRoutes from './routes/taskRoutes.js'; // Import the tasks route
 import userRoutes from './routes/userRoutes.js'; // Import user routes
+import aiImageRoutes from './routes/aiImageRoutes.js'; // Import user routes
 
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(cookieParser());  // Enable cookie parsing
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes); // Register tasks routes
 app.use('/api/users', userRoutes); // Use the user routes under the /api/users path
+app.use('/api/ai-image/generate-image', aiImageRoutes); // Use the ai image route
 
 
 
