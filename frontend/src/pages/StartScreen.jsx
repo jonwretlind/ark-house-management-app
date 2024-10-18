@@ -1,5 +1,5 @@
 // src/pages/StartScreen.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Typography, Button, Box, TextField, Alert } from '@mui/material';
 import axios from '../utils/api'; // Axios instance for API calls
 import { useNavigate } from 'react-router-dom'; // For navigation after login
@@ -11,24 +11,40 @@ const StartScreen = () => {
   const [error, setError] = useState(null); // Handle login errors
   const navigate = useNavigate(); // Hook for navigation
 
+   // Check if user is already logged in and redirect to dashboard
+   useEffect(() => {
+    const checkSession = async () => {
+      try {
+        await axios.get('/auth/me', { withCredentials: true });
+        navigate('/dashboard'); // Redirect if user is already logged in
+      } catch (error) {
+        console.log('No active session found, stay on login screen.');
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
+
   // Handle user login form submission
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null); // Clear any previous errors
 
     try {
-      await axios.post(
+      // Make API call to login endpoint
+      const response = await axios.post(
         '/auth/login',
         { email, password },
-        { withCredentials: true } // Send session cookie with request
+        { withCredentials: true } // Ensure cookies are sent with request
       );
-      navigate('/dashboard'); // Redirect to dashboard on success
+
+      console.log('Login successful:', response.data);
+      navigate('/dashboard'); // Redirect to dashboard on successful login
     } catch (error) {
-      console.error('Login failed:', error);
-      setError('Invalid email or password. Please try again.'); // Set error message
+      console.error('Login error:', error);
+      setError('Invalid email or password. Please try again.');
     }
   };
-
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '8rem' }}>
               {/* Logo */}

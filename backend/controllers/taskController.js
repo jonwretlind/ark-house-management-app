@@ -1,5 +1,19 @@
 import Task from '../models/Task.js';
 
+// Get a task by ID
+export const getTaskById = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id).populate('assignedTo', 'name');
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    res.status(200).json(task);
+  } catch (error) {
+    console.error('Error fetching task by ID:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Create a new task
 export const createTask = async (req, res) => {
   const { name, description, dueDate, points, priority, assignedTo } = req.body;

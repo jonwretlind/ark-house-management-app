@@ -4,13 +4,21 @@ import {
 } from '../controllers/taskController.js';
 import { authenticateToken, authenticateAdmin } from '../middleware/authMiddleware.js';
 
-const router = express.Router();
+const taskRoutes = express.Router();
 
-// CRUD operations
-router.post('/', authenticateToken, authenticateAdmin, createTask);
-router.get('/', authenticateToken, authenticateAdmin, getAllTasks);
-router.get('/:id', authenticateToken, authenticateAdmin, getTaskById);
-router.put('/:id', authenticateToken, authenticateAdmin, updateTask);
-router.delete('/:id', authenticateToken, authenticateAdmin, deleteTask);
+// Get all tasks (protected, admin-only route)
+taskRoutes.get('/', authenticateToken, getAllTasks);
 
-export default router;
+// Get task by ID (protected route)
+taskRoutes.get('/:id', authenticateToken, getTaskById);
+
+// Create a new task (admin-only)
+taskRoutes.post('/', authenticateToken, authenticateAdmin, createTask);
+
+// Update a task (admin-only)
+taskRoutes.put('/:id', authenticateToken, authenticateAdmin, updateTask);
+
+// Delete a task (admin-only)
+taskRoutes.delete('/:id', authenticateToken, authenticateAdmin, deleteTask);
+
+export default taskRoutes;

@@ -13,6 +13,7 @@ const taskSchema = new mongoose.Schema({
   priority: { type: Number, default: 1 },  // New field for priority
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  image: { type: String, required: false}, // Store image URL or base64
 });
 
 const Task = mongoose.model('Task', taskSchema);

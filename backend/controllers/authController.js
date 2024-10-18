@@ -2,10 +2,11 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
 
 // Register Function
 export const register = async (req, res) => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+
   const { name, email, phone, password, isAdmin } = req.body;
 
   try {
@@ -60,6 +61,8 @@ export const register = async (req, res) => {
 
 // Login Function
 export const login = async (req, res) => {
+  const JWT_SECRET = process.env.JWT_SECRET; // Ensure this is loaded correctly
+
   const { email, password } = req.body;
 
   try {

@@ -1,28 +1,25 @@
 // middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;  // Make sure JWT_SECRET is set in your .env file
-
 // Middleware to authenticate JWT token
 export const authenticateToken = (req, res, next) => {
-  // Get token from the Authorization header
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];  // Bearer <token>
+  const JWT_SECRET = process.env.JWT_SECRET;  // Make sure JWT_SECRET is set in your .env file
+
+  const token = req.cookies.session_token; // Get token from session cookie
 
   if (!token) {
     return res.status(401).json({ message: 'Access denied: No token provided' });
   }
 
   // Verify the token
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
-    }
-
-    // Attach user information to the request object
-    req.user = user;
-    next();  // Proceed to the next middleware or route handler
-  });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify token
+    req.user = decoded; // Attach user info to request object
+    next(); // Proceed to next middleware/route handler
+  } catch (error) {
+    console.error('Invalid or expired token:', error);
+    res.status(401).json({ message: 'Invalid or expired token.' });
+  }
 };
 
 // Middleware to ensure the user is an admin

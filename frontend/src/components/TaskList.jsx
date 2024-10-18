@@ -1,53 +1,31 @@
-// src/components/TaskList.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Card, CardContent, Typography, Button, Grid } from '@mui/material';
+// src/components/TaskList.jsx
+import React from 'react';
+import { Box, Stack, Typography, Paper } from '@mui/material';
 
-function TaskList() {
-  const [tasks, setTasks] = useState([]);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get('/tasks');
-        setTasks(response.data);
-      } catch (error) {
-        console.error('Error fetching tasks', error);
-      }
-    };
-    fetchTasks();
-  }, []);
-
-  const handleTaskComplete = async (taskId) => {
-    try {
-      await axios.post(`/task/complete/${taskId}`);
-      setTasks(tasks.filter(task => task._id !== taskId));
-    } catch (error) {
-      console.error('Error completing task', error);
-    }
-  };
-
+const TaskList = ({ tasks }) => {
   return (
-    <Grid container spacing={2}>
-      {tasks.map(task => (
-        <Grid item xs={12} sm={6} md={4} key={task._id}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">{task.name}</Typography>
-              <Typography variant="body2">Points: {task.points}</Typography>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={() => handleTaskComplete(task._id)}
-              >
-                Complete Task
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
+    <Box sx={{ padding: 2 }}>
+    {/* Show message if no tasks are available */}
+    {tasks.length === 0 ? (
+      <Typography variant="h6" align="center" sx={{ margin: 2 }}>
+        There are no tasks in your list.
+      </Typography>
+    ) : (
+    <Stack spacing={2} sx={{ padding: 2 }}>
+      {tasks.map((task) => (
+        <Paper key={task._id} sx={{ padding: 2, borderRadius: 2 }}>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <Typography variant="h6">{task.name}</Typography>
+            <Typography variant="body2">Due: {new Date(task.dueDate).toLocaleDateString()}</Typography>
+            <Typography variant="body2">Priority: {task.priority}</Typography>
+            <Typography variant="body2">Points: {task.points}</Typography>
+          </Box>
+        </Paper>
       ))}
-    </Grid>
+    </Stack>
+  )}
+    </Box>
   );
-}
+};
 
 export default TaskList;

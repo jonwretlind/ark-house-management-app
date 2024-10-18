@@ -1,120 +1,249 @@
-// src/pages/AdminTaskTable.jsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
-import { TextField, Button, Table, TableBody, TableCell, TableHead, TableRow, Container } from '@mui/material';
+// src/components/AdminTaskTable.jsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  Paper,
+  TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import axios from '../utils/api';
 
-const AdminTaskTable = () => {
-  const [tasks, setTasks] = useState([]);
-  const [editTask, setEditTask] = useState({});
 
-  // Base API URL from environment variables
-  const API_URL = import.meta.env.VITE_API_URL;
+const AdminTaskTable = ({ tasks, setTasks }) => {
+  const [internalTasks, setInternalTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false); // Dialog state
+  const [users, setUsers] = useState([]); // Store system users for the dropdown
+  const [newTask, setNewTask] = useState({
+    name: '',
+    description: '',
+    dueDate: '',
+    points: '',
+    priority: 1,
+    assignedTo: '',
+    image: null,
+  });
 
-  // Fetch all tasks from the backend
+  // Synchronize internalTasks with tasks prop using useEffect
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/tasks`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        setTasks(response.data);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      }
-    };
-    fetchTasks();
-  }, [API_URL]);
+    handleSetInternalTasks(tasks);
+  }, [tasks]);
 
-  // Handle drag and drop for priority sorting
-  const handleDragEnd = async (result) => {
-    const { source, destination } = result;
-    if (!destination) return;
-
-    const reorderedTasks = Array.from(tasks);
-    const [movedTask] = reorderedTasks.splice(source.index, 1);
-    reorderedTasks.splice(destination.index, 0, movedTask);
-
-    setTasks(reorderedTasks);
-    try {
-      await axios.put(`${API_URL}/tasks/${movedTask._id}`, { priority: destination.index + 1 }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-    } catch (error) {
-      console.error('Error updating task priority:', error);
+  // Function to set internalTasks and ensure state consistency
+  const handleSetInternalTasks = (newTasks) => {
+    if (Array.isArray(newTasks)) {
+      setInternalTasks([...newTasks]);
+    } else {
+      console.warn('Invalid tasks format: expected an array.');
     }
   };
 
-  // Handle inline task updates
-  const handleEditChange = (id, field, value) => {
-    setEditTask((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
-  };
+// Helper function to reorder tasks
+const reorderTasks = (tasks, startIndex, endIndex) => {
+  const result = Array.from(tasks);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
+};
 
-  const handleUpdateTask = async (id) => {
+// Sort tasks by priority
+const sortTasksByPriority = (tasks) => tasks.sort((a, b) => a.priority - b.priority);
+
+  // Edit task function
+  const onEdit = async (task) => {
     try {
-      await axios.put(`${API_URL}/tasks/${id}`, editTask[id], {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      setEditTask((prev) => ({ ...prev, [id]: undefined }));  // Reset editing state
+      const updatedTask = { ...task, name: task.name + ' (Edited)' }; // Example update
+      await axios.put(`/tasks/${task._id}`, updatedTask, { withCredentials: true });
+
+      // Update the task in the state
+      setTasks((prevTasks) =>
+        prevTasks.map((t) => (t._id === task._id ? updatedTask : t))
+      );
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
 
+  // Delete task function
+  const onDelete = async (taskId) => {
+    try {
+      await axios.delete(`/tasks/${taskId}`, { withCredentials: true });
+      setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  // Fetch users from the backend to populate the dropdown
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('/users', { withCredentials: true });
+        setUsers(response.data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    fetchUsers();
+
+    const fetchTasks = async () => {
+      try {
+        const response = await axios.get('/tasks', { withCredentials: true });
+        setTasks(response.data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTasks();
+    setTasks(sortTasksByPriority(tasks));
+  }, [tasks, setTasks]);
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const reorderedTasks = Array.from(tasks);
+    const [removed] = reorderedTasks.splice(result.source.index, 1);
+    reorderedTasks.splice(result.destination.index, 0, removed);
+  
+    setTasks(reorderedTasks); // Ensure state is updated correctly
+  };
+
+  const handleChange = (e) => {
+    setNewTask({ ...newTask, [e.target.name]: e.target.value });
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewTask({ ...newTask, image: reader.result });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCreateTask = async () => {
+    try {
+      const response = await axios.post('/tasks', newTask, { withCredentials: true });
+      setTasks((prevTasks) => [...prevTasks, response.data]);
+      setOpen(false);
+      setNewTask({
+        name: '',
+        description: '',
+        dueDate: '',
+        points: '',
+        priority: 1,
+        assignedTo: '',
+        image: null,
+      });
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+  };
+
   return (
-    <Container>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="tasks">
-          {(provided) => (
-            <Table {...provided.droppableProps} ref={provided.innerRef}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Task Name</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Points</TableCell>
-                  <TableCell>Priority</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+    <Box sx={{ padding: 2 }}>
+      {tasks.length === 0 ? (
+        <Typography variant="h6" align="center" sx={{ margin: 2 }}>
+          There are no tasks in your list.
+        </Typography>
+      ) : (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="tasks">
+            {(provided) => (
+              <Stack spacing={2} {...provided.droppableProps} ref={provided.innerRef}>
                 {tasks.map((task, index) => (
-                  <Draggable key={task._id} draggableId={task._id} index={index}>
+                  <Draggable key={task._id} draggableId={task._id.toString()} index={index}>
                     {(provided) => (
-                      <TableRow {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
-                        <TableCell>
-                          <TextField
-                            value={editTask[task._id]?.name || task.name}
-                            onChange={(e) => handleEditChange(task._id, 'name', e.target.value)}
+                      <Paper
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        sx={{ padding: 2, borderRadius: 2, display: 'flex', gap: 2 }}
+                      >
+                        {task.image && (
+                          <Box
+                            component="img"
+                            src={task.image}
+                            alt={task.name}
+                            sx={{ width: '20%', height: 'auto', objectFit: 'cover' }}
                           />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editTask[task._id]?.description || task.description}
-                            onChange={(e) => handleEditChange(task._id, 'description', e.target.value)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            type="number"
-                            value={editTask[task._id]?.points || task.points}
-                            onChange={(e) => handleEditChange(task._id, 'points', e.target.value)}
-                          />
-                        </TableCell>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
-                          <Button onClick={() => handleUpdateTask(task._id)}>Save</Button>
-                        </TableCell>
-                      </TableRow>
+                        )}
+                        <Box display="flex" flexDirection="column" gap={1} sx={{ flexGrow: 1 }}>
+                          <Typography variant="h6">{task.name}</Typography>
+                          <Typography variant="body2">
+                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                          </Typography>
+                          <Typography variant="body2">Priority: {task.priority}</Typography>
+                          <Typography variant="body2">Points: {task.points}</Typography>
+                          <Typography variant="body2">
+                            Assigned To: {task.assignedTo?.name || 'Unassigned'}
+                          </Typography>
+                          <Box display="flex" justifyContent="space-between" mt={1}>
+                            <Button variant="outlined" onClick={() => onEdit(task)}>
+                              Edit
+                            </Button>
+                            <Button variant="outlined" color="error" onClick={() => onDelete(task._id)}>
+                              Delete
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Paper>
                     )}
                   </Draggable>
                 ))}
                 {provided.placeholder}
-              </TableBody>
-            </Table>
-          )}
-        </Droppable>
-      </DragDropContext>
-    </Container>
+              </Stack>
+            )}
+          </Droppable>
+        </DragDropContext>
+      )}
+
+      <Button variant="contained" onClick={() => setOpen(true)} sx={{ marginTop: 2 }}>
+        Add New Task
+      </Button>
+
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>Create New Task</DialogTitle>
+        <DialogContent>
+          <TextField name="name" label="Task Name" fullWidth value={newTask.name} onChange={handleChange} required />
+          <TextField name="description" label="Description" fullWidth value={newTask.description} onChange={handleChange} />
+          <TextField name="dueDate" type="date" fullWidth value={newTask.dueDate} onChange={handleChange} required />
+          <TextField name="points" type="number" fullWidth value={newTask.points} onChange={handleChange} required />
+          <TextField name="priority" type="number" fullWidth value={newTask.priority} onChange={handleChange} required />
+          <FormControl fullWidth sx={{ marginTop: 2 }}>
+            <InputLabel>Assign To</InputLabel>
+            <Select name="assignedTo" value={newTask.assignedTo} onChange={handleChange}>
+              <MenuItem value="">Unassigned</MenuItem>
+              {users.map((user) => (
+                <MenuItem key={user._id} value={user._id}>
+                  {user.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button component="label" sx={{ marginTop: 2 }}>
+            Upload Image
+            <input type="file" hidden onChange={handleImageUpload} />
+          </Button>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreateTask}>Create</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

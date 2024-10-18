@@ -1,39 +1,39 @@
 // src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '../utils/api'; // Axios instance for API calls
 import AdminTaskTable from '../components/AdminTaskTable'; // Admin task management
 import UserAvatar from '../components/UserAvatar'; // User avatar and info display
 import TaskList from '../components/TaskList'; // Task list for non-admins
-import StartScreen from './_StartScreen'; // Start screen if not authenticated
+import StartScreen from './StartScreen'; // Start screen if not authenticated
 
 const Dashboard = () => {
   const [user, setUser] = useState(null); // Track user state
   const [tasks, setTasks] = useState([]); // Store tasks
-  const [isAdmin, setIsAdmin] = useState(false); // Check if user is admin
+  const [isAdmin, setIsAdmin] = useState(false); // Track admin status
+  const [loading, setLoading] = useState(true); // Track loading state
+  const navigate = useNavigate(); // React Router navigation hook
 
-  // Check for session cookie on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUserData = async () => {
       try {
-        // Fetch the current logged-in user's information
         const userResponse = await axios.get('/auth/me', { withCredentials: true });
         setUser(userResponse.data);
         setIsAdmin(userResponse.data.isAdmin);
 
-        // Fetch tasks and sort them by priority and points
+        // Fetch tasks if the user is authenticated
         const tasksResponse = await axios.get('/tasks', { withCredentials: true });
-        const sortedTasks = tasksResponse.data.sort(
-          (a, b) => b.priority - a.priority || b.points - a.points
-        );
-        setTasks(sortedTasks);
+        setTasks(tasksResponse.data);
       } catch (error) {
-        console.error('User not authenticated or session expired:', error);
-        setUser(null); // Clear user state if not authenticated
+        console.error('Authentication failed, redirecting to login...');
+        navigate('/'); // Redirect to StartScreen if authentication fails
+      } finally {
+        setLoading(false); // Ensure loading state is cleared
       }
     };
 
-    fetchData();
-  }, []);
+    fetchUserData();
+  }, [navigate]);
 
   // Logout function to clear the session cookie
   const handleLogout = async () => {
@@ -45,8 +45,8 @@ const Dashboard = () => {
     }
   };
 
-  // Display StartScreen if the user is not authenticated
-  if (!user) return <StartScreen />;
+  if (loading) return <p>Loading...</p>; // Avoid rendering during loading
+
 
   return (
     <div style={{ marginTop: '2rem' }}>
@@ -62,7 +62,7 @@ const Dashboard = () => {
       </button>
 
       {/* Render AdminTaskTable or TaskList Based on User Role */}
-      {isAdmin ? <AdminTaskTable /> : <TaskList tasks={tasks} />}
+      {isAdmin ? <AdminTaskTable tasks={tasks} setTasks={setTasks} /> : <TaskList tasks={tasks} />}
     </div>
   );
 };

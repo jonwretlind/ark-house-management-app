@@ -7,20 +7,22 @@ import Register from './pages/Register';
 import Login from './pages/Login';  // Ensure you have a login page
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
+import TaskList from './components/TaskList';
 
 export const App = () => {
-  const isAuthenticated = !!localStorage.getItem('token');  // Check if the user is authenticated
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <Routes>
           {/* Start Screen */}
-          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <StartScreen />} />
+          <Route path="/" element={<StartScreen />} />
           {/* Dashboard */}
           <Route path="/dashboard" element={<Dashboard />} />
           {/* User Registrations and Login */}
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/tasks" element={<TaskList />} />
+          <Route path="*" element={<Navigate to="/" />} /> {/* Fallback route */}
         </Routes>
       </Router>
     </ThemeProvider>
