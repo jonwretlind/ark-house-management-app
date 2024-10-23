@@ -4,7 +4,7 @@ import { Box, Stack, Typography, Paper } from '@mui/material';
 
 const TaskList = ({ tasks }) => {
   return (
-    <Box sx={{ padding: 2 }}>
+    <Box sx={{ padding: 2, backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>
     {/* Show message if no tasks are available */}
     {tasks.length === 0 ? (
       <Typography variant="h6" align="center" sx={{ margin: 2 }}>
@@ -15,7 +15,7 @@ const TaskList = ({ tasks }) => {
       {tasks.map((task) => (
         <Paper key={task._id} sx={{ padding: 2, borderRadius: 2 }}>
           <Box display="flex" flexDirection="column" gap={1}>
-            <Typography variant="h6">{task.name}</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{task.name}</Typography>
             <Typography variant="body2">Due: {new Date(task.dueDate).toLocaleDateString()}</Typography>
             <Typography variant="body2">Priority: {task.priority}</Typography>
             <Typography variant="body2">Points: {task.points}</Typography>

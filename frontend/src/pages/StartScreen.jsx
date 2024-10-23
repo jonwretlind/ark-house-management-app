@@ -1,24 +1,33 @@
 // src/pages/StartScreen.jsx
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, Box, TextField, Alert } from '@mui/material';
+import { Container, Typography, Button, Box, TextField, Alert, CircularProgress } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import axios from '../utils/api'; // Axios instance for API calls
 import { useNavigate } from 'react-router-dom'; // For navigation after login
 import Logo from '../components/Logo';
+// Add this import
+import backgroundImage from '../../assets/screen1.png';
+import theme from '../theme';
 
 const StartScreen = () => {
   const [email, setEmail] = useState(''); // Track email input
   const [password, setPassword] = useState(''); // Track password input
   const [error, setError] = useState(null); // Handle login errors
+  const [loading, setLoading] = useState(true); // Add loading state
   const navigate = useNavigate(); // Hook for navigation
 
-   // Check if user is already logged in and redirect to dashboard
-   useEffect(() => {
+  // Check if user is already logged in and redirect to dashboard
+  useEffect(() => {
     const checkSession = async () => {
       try {
-        await axios.get('/auth/me', { withCredentials: true });
-        navigate('/dashboard'); // Redirect if user is already logged in
+        const response = await axios.get('/auth/me', { withCredentials: true });
+        if (response.data) {
+          navigate('/dashboard'); // Redirect if user is already logged in
+        }
       } catch (error) {
         console.log('No active session found, stay on login screen.');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -45,52 +54,94 @@ const StartScreen = () => {
       setError('Invalid email or password. Please try again.');
     }
   };
+
+  const glassyBoxStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '15px',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
+    padding: 4,
+    textAlign: 'center',
+  };
+
+  if (loading) {
+    return <CircularProgress />;
+  }
+
   return (
-    <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '8rem' }}>
-              {/* Logo */}
-      <Logo />
-      <Typography variant="h5" align="center" gutterBottom>
-        Welcome to The Ark Sober Living
-      </Typography>
-      <Typography variant="subtitle1" gutterBottom>
-        Please log in to access your tasks and dashboard.
-      </Typography>
-
-      {error && <Alert severity="error" style={{ marginBottom: '1rem' }}>{error}</Alert>}
-
-      <form onSubmit={handleLogin}>
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={4}>
-          <TextField
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            variant="outlined"
-            fullWidth
-            required
-          />
-          <TextField
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            variant="outlined"
-            fullWidth
-            required
-          />
-          <Button type="submit" variant="contained" color="primary" fullWidth>
-            Login
-          </Button>
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: '120% 120%', // Enlarge the background to 120%
+          backgroundPosition: '5% 78%',
+          backgroundAttachment: 'fixed',
+          position: 'relative',
+          paddingTop: '15vh', // Add top padding to lower the content
+        }}
+      >
+        <Box 
+          sx={{ 
+            position: 'absolute',
+            top: '10vh', // Adjust this value to move the logo down
+            left: '50%',
+            width: '50%',
+            transform: 'translateX(-50%)',
+            filter: 'brightness(0) invert(1)',
+            marginBottom: 4, // Decrease the margin
+          }}
+        >
+          <Logo />
         </Box>
-      </form>
 
-      <Box mt={4}>
-        <Typography variant="body2">Don't have an account?</Typography>
-        <Button variant="outlined" href="/register">
-          Register Here
-        </Button>
+        <Container maxWidth="sm">
+          <Box sx={glassyBoxStyle}>
+            <Typography variant="h4" component="h1" gutterBottom color="text.primary">
+              Welcome to the Ark
+            </Typography>
+            <Typography variant="h6" component="h2" gutterBottom color="text.primary">
+              Christ-Centered Sober Living
+            </Typography>
+            <form onSubmit={handleLogin}>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Email"
+                variant="outlined"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Password"
+                type="password"
+                variant="outlined"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {error && <Alert severity="error">{error}</Alert>}
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                size="large"
+                sx={{ mt: 2 }}
+              >
+                Login
+              </Button>
+            </form>
+          </Box>
+        </Container>
       </Box>
-    </Container>
+    </ThemeProvider>
   );
 };
 

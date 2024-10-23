@@ -1,8 +1,7 @@
 // src/components/AdminTaskTable.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
-  Stack,
   Typography,
   Button,
   Paper,
@@ -16,14 +15,84 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
+  IconButton,
+  Tabs,
+  Tab,
+  styled,
+  useTheme,
 } from '@mui/material';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import axios from '../utils/api';
-import defaultPlaceholder from '../../assets/placeholder.png'; // Placeholder image
+import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
+import TaskCard from './TaskCard';
+import update from 'immutability-helper';
 
-const AdminTaskTable = ({ tasks, setTasks }) => {
+// Import all icon images from the assets/icons folder
+import logo from '../../assets/logo.png';
+
+// Update the dynamic import to use the new syntax
+const iconContext = import.meta.glob('../../assets/icons/*.{png,jpg,jpeg,svg}', { eager: true, query: '?url', import: 'default' });
+const iconOptions = Object.values(iconContext);
+
+// Styled components for light-colored tabs
+const LightTabs = styled(Tabs)(({ theme }) => ({
+  '& .MuiTabs-indicator': {
+    backgroundColor: theme.palette.common.white,
+  },
+}));
+
+const LightTab = styled(Tab)(({ theme }) => ({
+  color: theme.palette.grey[300],
+  '&.Mui-selected': {
+    color: theme.palette.common.white,
+  },
+}));
+
+const TaskItem = ({ task, index, moveTask, onEdit, onDelete, tabIndex }) => {
+  const [{ isDragging }, drag] = useDrag({
+    type: 'TASK',
+    item: { id: task._id, index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  const [, drop] = useDrop({
+    accept: 'TASK',
+    hover(item, monitor) {
+      if (!drag) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+      moveTask(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
+  return (
+    <div ref={(node) => drag(drop(node))}>
+      <TaskCard
+        task={task}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        isDragging={isDragging}
+        showAssignedUser={tabIndex === 2}
+      />
+    </div>
+  );
+};
+
+const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
+  const theme = useTheme();
   const [internalTasks, setInternalTasks] = useState([]);
-  const [loading, setLoading] = useState({});
+  const [isUpdating, setIsUpdating] = useState(false);
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [newTask, setNewTask] = useState({
@@ -31,57 +100,95 @@ const AdminTaskTable = ({ tasks, setTasks }) => {
     description: '',
     dueDate: '',
     points: '',
-    priority: 1,
     assignedTo: '',
-    image: null,
+    icon: '',
   });
+  const [tabValue, setTabValue] = useState(0);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // Synchronize tasks with internal state
-  useEffect(() => {
-    handleSetInternalTasks(tasks);
-  }, [tasks]);
-
-  // Function to generate images only once per task and maintain state
-  const handleSetInternalTasks = async (newTasks) => {
-    const tasksWithImages = await Promise.all(
-      newTasks.map(async (task) => {
-        if (!task.imageUrl) {
-          setLoading((prev) => ({ ...prev, [task._id]: true }));
-          try {
-            const response = await axios.post('/ai-image/generate-image', {
-              taskName: task.name,
-              description: task.description,
-            });
-            return { ...task, imageUrl: response.data.imageUrl };
-          } catch (error) {
-            console.error(`Failed to generate image for ${task.name}`, error);
-            return { ...task, imageUrl: '' }; // Use empty URL as fallback
-          } finally {
-            setLoading((prev) => ({ ...prev, [task._id]: false }));
-          }
-        }
-        return task;
-      })
+  const filterTasks = useCallback((tasks) => {
+    const userTasks = tasks.filter(task => 
+      task.assignedTo && 
+      (task.assignedTo._id === currentUser._id || task.assignedTo === currentUser._id)
     );
-    setInternalTasks(tasksWithImages);
-  };
+    const unassignedTasks = tasks.filter(task => 
+      !task.assignedTo || 
+      task.assignedTo === "Unassigned" || 
+      (task.assignedTo && task.assignedTo.name === "Unassigned")
+    );
+    const otherUserTasks = tasks.filter(task => 
+      task.assignedTo && 
+      task.assignedTo !== "Unassigned" && 
+      task.assignedTo._id !== currentUser._id && 
+      task.assignedTo !== currentUser._id &&
+      task.assignedTo.name !== "Unassigned"
+    );
+    console.log('Filtered tasks:', { userTasks, unassignedTasks, otherUserTasks });
+    return [userTasks, unassignedTasks, otherUserTasks];
+  }, [currentUser]);
 
-  // Reorder tasks during drag-and-drop
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const reorderedTasks = reorderTasks(internalTasks, result.source.index, result.destination.index);
-    setInternalTasks(reorderedTasks);
-    setTasks(reorderedTasks);
-  };
+  useEffect(() => {
+    if (tasks && tasks.length > 0) {
+      const formattedTasks = tasks.map((task, index) => ({
+        ...task,
+        _id: task._id ? task._id.toString() : task._id,
+        priority: index + 1 // Set priority based on the order
+      }));
+      setInternalTasks(formattedTasks);
+      console.log('Formatted tasks:', formattedTasks);
+      
+      const [userTasks, unassignedTasks, otherUserTasks] = filterTasks(formattedTasks);
+      console.log('User tasks:', userTasks);
+      console.log('Unassigned:', unassignedTasks);
+      console.log('Other:', otherUserTasks);
+    }
+  }, [tasks, filterTasks]);
 
-  const reorderTasks = (tasks, startIndex, endIndex) => {
-    const result = Array.from(tasks);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
-    return result;
-  };
+  const moveTask = useCallback((dragIndex, hoverIndex) => {
+    setInternalTasks((prevTasks) => {
+      const updatedTasks = update(prevTasks, {
+        $splice: [
+          [dragIndex, 1],
+          [hoverIndex, 0, prevTasks[dragIndex]],
+        ],
+      });
+      setHasChanges(true);
+      return updatedTasks;
+    });
+  }, []);
 
-  // Handle form changes
+  const updateTaskPriorities = useCallback(async () => {
+    if (internalTasks.length === 0 || isUpdating || !hasChanges) return;
+
+    setIsUpdating(true);
+    try {
+      const updatedPriorities = internalTasks.map((task, index) => ({
+        id: task._id,
+        priority: index + 1
+      }));
+
+      await axios.put('/tasks/update-priorities', { priorities: updatedPriorities }, { withCredentials: true });
+      
+      // Update the main tasks state
+      setTasks(internalTasks);
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error updating task priorities:', error.response?.data || error.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [internalTasks, setTasks, isUpdating, hasChanges]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (hasChanges) {
+        updateTaskPriorities();
+      }
+    }, 2000); // Increased debounce time to 2 seconds
+
+    return () => clearTimeout(timer);
+  }, [hasChanges, updateTaskPriorities]);
+
   const handleChange = (e) => {
     setNewTask({ ...newTask, [e.target.name]: e.target.value });
   };
@@ -105,7 +212,6 @@ const AdminTaskTable = ({ tasks, setTasks }) => {
         description: '',
         dueDate: '',
         points: '',
-        priority: 1,
         assignedTo: '',
         image: null,
       });
@@ -114,7 +220,6 @@ const AdminTaskTable = ({ tasks, setTasks }) => {
     }
   };
 
-  // Fetch users for dropdown
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -127,107 +232,200 @@ const AdminTaskTable = ({ tasks, setTasks }) => {
     fetchUsers();
   }, []);
 
+  const handleEditTask = (task) => {
+    setNewTask(task);
+    setOpen(true);
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await axios.delete(`/tasks/${taskId}`, { withCredentials: true });
+      setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleCreateOrUpdateTask = async () => {
+    try {
+      const taskData = {
+        name: newTask.name,
+        description: newTask.description,
+        dueDate: newTask.dueDate,
+        points: newTask.points,
+        assignedTo: newTask.assignedTo || "Unassigned",
+        icon: newTask.icon || logo, // Use logo as default if no icon is selected
+      };
+
+      if (newTask._id) {
+        // Update existing task
+        const response = await axios.put(`/tasks/${newTask._id}`, taskData, { withCredentials: true });
+        console.log('Task updated:', response.data);
+        setTasks((prevTasks) => prevTasks.map((task) => task._id === newTask._id ? response.data : task));
+      } else {
+        // Create new task
+        console.log('Creating new task with data:', taskData);
+        const response = await axios.post('/tasks', taskData, { withCredentials: true });
+        console.log('New task created:', response.data);
+        setTasks((prevTasks) => [response.data, ...prevTasks]); // Add new task to the top of the list
+      }
+      setOpen(false);
+      setNewTask({
+        name: '',
+        description: '',
+        dueDate: '',
+        points: '',
+        assignedTo: '',
+        icon: '',
+      });
+      
+      // Fetch updated tasks
+      const updatedTasksResponse = await axios.get('/tasks', { withCredentials: true });
+      setTasks(updatedTasksResponse.data);
+    } catch (error) {
+      console.error('Error creating/updating task:', error.response?.data || error.message);
+      // You can add user feedback here, e.g., using a snackbar or alert
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const [userTasks, unassignedTasks, otherUserTasks] = useMemo(() => filterTasks(internalTasks), [filterTasks, internalTasks]);
+
+  const renderTaskList = (taskList, tabIndex) => (
+    <div>
+      {taskList.map((task, index) => (
+        <TaskItem
+          key={task._id ? task._id.toString() : index}
+          task={task}
+          index={index}
+          moveTask={moveTask}
+          onEdit={handleEditTask}
+          onDelete={handleDeleteTask}
+          tabIndex={tabIndex}
+        />
+      ))}
+    </div>
+  );
+
+  const glassyBoxStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '15px',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
+    padding: 2,
+    marginBottom: 2,
+  };
+
   return (
-    <Box sx={{ padding: 2 }}>
-      {internalTasks.length === 0 ? (
-        <Typography variant="h6" align="center" sx={{ margin: 2 }}>
-          There are no tasks in your list.
-        </Typography>
-      ) : (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="tasks">
-            {(provided) => (
-              <Stack spacing={2} {...provided.droppableProps} ref={provided.innerRef}>
-                {internalTasks.map((task, index) => (
-                  <Draggable key={task._id} draggableId={task._id.toString()} index={index}>
-                    {(provided) => (
-                      <Paper
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        sx={{ padding: 2, display: 'flex', gap: 2 }}
-                      >
-                        <Box sx={{ width: '100px', height: '100px' }}>
-                          {loading[task._id] ? (
-                            <CircularProgress />
-                          ) : task.imageUrl ? (
-                            <img
-                              src={task.imageUrl}
-                              alt={task.name}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <img
-                              src={defaultPlaceholder}
-                              alt="Placeholder"
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          )}
-                        </Box>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="h6">{task.name}</Typography>
-                          <Typography variant="body2">
-                            Due: {new Date(task.dueDate).toLocaleDateString()}
-                          </Typography>
-                          <Typography variant="body2">Priority: {task.priority}</Typography>
-                          <Typography variant="body2">Points: {task.points}</Typography>
-                          <Typography variant="body2">
-                            Assigned To: {task.assignedTo?.name || 'Unassigned'}
-                          </Typography>
-                          <Box display="flex" justifyContent="space-between" mt={1}>
-                            <Button variant="outlined" onClick={() => onEdit(task)}>
-                              Edit
-                            </Button>
-                            <Button variant="outlined" color="error" onClick={() => onDelete(task._id)}>
-                              Delete
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Paper>
-                    )}
-                  </Draggable>
+    <DndProvider backend={HTML5Backend}>
+      <Box sx={{ padding: 1 }}>
+        <LightTabs 
+          value={tabValue} 
+          onChange={handleTabChange} 
+          aria-label="task tabs"
+          sx={{ 
+            '& .MuiTabs-indicator': {
+              backgroundColor: theme.palette.secondary.main,
+            },
+            // Remove background and box shadow
+            '& .MuiTabs-flexContainer': {
+              backgroundColor: 'transparent',
+              boxShadow: 'none',
+            },
+          }}
+        >
+          <LightTab label="My Tasks" sx={{ color: theme.palette.text.primary }} />
+          <LightTab label="Unassigned" sx={{ color: theme.palette.text.primary }} />
+          <LightTab label="Other" sx={{ color: theme.palette.text.primary }} />
+        </LightTabs>
+
+        <Box sx={{ mt: 2 }}>
+          {tabValue === 0 && renderTaskList(userTasks, 0)}
+          {tabValue === 1 && renderTaskList(unassignedTasks, 1)}
+          {tabValue === 2 && renderTaskList(otherUserTasks, 2)}
+        </Box>
+
+        <IconButton 
+          onClick={() => setOpen(true)} 
+          sx={{ 
+            marginTop: 2,
+            ...glassyBoxStyle,
+            width: 56,
+            height: 56,
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            },
+          }} 
+          aria-label="add task"
+        >
+          <AddIcon />
+        </IconButton>
+
+        <Dialog 
+          open={open} 
+          onClose={() => setOpen(false)}
+          PaperProps={{
+            sx: {
+              ...glassyBoxStyle,
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            },
+          }}
+        >
+          <DialogTitle>{newTask._id ? 'Edit Task' : 'Create New Task'}</DialogTitle>
+          <DialogContent>
+            <TextField name="name" label="Task Name" fullWidth value={newTask.name} onChange={handleChange} sx={{ mt: 2 }} />
+            <TextField name="description" label="Description" fullWidth value={newTask.description} onChange={handleChange} sx={{ mt: 2 }} />
+            <TextField name="dueDate" type="date" fullWidth value={newTask.dueDate} onChange={handleChange} sx={{ mt: 2 }} InputLabelProps={{ shrink: true }} />
+            <TextField name="points" type="number" fullWidth value={newTask.points} onChange={handleChange} sx={{ mt: 2 }} />
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Assign To</InputLabel>
+              <Select name="assignedTo" value={newTask.assignedTo} onChange={handleChange}>
+                <MenuItem value="">Unassigned</MenuItem>
+                {users.map((user) => (
+                  <MenuItem key={user._id} value={user._id}>
+                    {user.name}
+                  </MenuItem>
                 ))}
-                {provided.placeholder}
-              </Stack>
-            )}
-          </Droppable>
-        </DragDropContext>
-      )}
-
-      <Button variant="contained" onClick={() => setOpen(true)} sx={{ marginTop: 2 }}>
-        Add New Task
-      </Button>
-
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Create New Task</DialogTitle>
-        <DialogContent>
-          <TextField name="name" label="Task Name" fullWidth value={newTask.name} onChange={handleChange} />
-          <TextField name="description" label="Description" fullWidth value={newTask.description} onChange={handleChange} />
-          <TextField name="dueDate" type="date" fullWidth value={newTask.dueDate} onChange={handleChange} />
-          <TextField name="points" type="number" fullWidth value={newTask.points} onChange={handleChange} />
-          <TextField name="priority" type="number" fullWidth value={newTask.priority} onChange={handleChange} />
-          <FormControl fullWidth sx={{ marginTop: 2 }}>
-            <InputLabel>Assign To</InputLabel>
-            <Select name="assignedTo" value={newTask.assignedTo} onChange={handleChange}>
-              <MenuItem value="">Unassigned</MenuItem>
-              {users.map((user) => (
-                <MenuItem key={user._id} value={user._id}>
-                  {user.name}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Icon</InputLabel>
+              <Select
+                name="icon"
+                value={newTask.icon}
+                onChange={handleChange}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <img src={selected || logo} alt="Task icon" style={{ width: 30, height: 30, marginRight: 10 }} />
+                    {selected ? selected.split('/').pop() : 'Default Logo'}
+                  </Box>
+                )}
+              >
+                <MenuItem value="">
+                  <em>Default Logo</em>
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button component="label" sx={{ marginTop: 2 }}>
-            Upload Image
-            <input type="file" hidden onChange={handleImageUpload} />
-          </Button>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreateTask}>Create</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+                {iconOptions.map((icon, index) => (
+                  <MenuItem key={index} value={icon}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <img src={icon} alt={`Icon ${index + 1}`} style={{ width: 30, height: 30, marginRight: 10 }} />
+                      {icon.split('/').pop()}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateOrUpdateTask}>{newTask._id ? 'Update' : 'Create'}</Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </DndProvider>
   );
 };
 
