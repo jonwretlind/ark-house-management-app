@@ -1,29 +1,88 @@
 // src/components/TaskList.jsx
-import React from 'react';
-import { Box, Stack, Typography, Paper } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Tabs, Tab } from '@mui/material';
+import TaskCard from './TaskCard';
+import axios from '../utils/api';
+import { useTheme } from '@mui/material/styles';
 
-const TaskList = ({ tasks }) => {
+const TaskList = ({ tasks, setTasks, currentUser }) => {
+  const [tabValue, setTabValue] = useState(0);
+  const theme = useTheme();
+
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get('/tasks', { withCredentials: true });
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const filterTasks = () => {
+    switch (tabValue) {
+      case 0: // My Tasks
+        return tasks.filter(task => task.assignedTo && task.assignedTo._id === currentUser._id);
+      case 1: // Unassigned Tasks
+        return tasks.filter(task => !task.assignedTo || task.assignedTo === "Unassigned");
+      case 2: // Completed Tasks
+        return tasks.filter(task => task.isCompleted && task.assignedTo && task.assignedTo._id === currentUser._id);
+      default:
+        return tasks;
+    }
+  };
+
+  const handleEditTask = (task) => {
+    // Implement edit functionality here
+    console.log('Edit task:', task);
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await axios.delete(`/tasks/${taskId}`, { withCredentials: true });
+      fetchTasks(); // Refresh the task list after deletion
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
   return (
-    <Box sx={{ padding: 2, backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>
-    {/* Show message if no tasks are available */}
-    {tasks.length === 0 ? (
-      <Typography variant="h6" align="center" sx={{ margin: 2 }}>
-        There are no tasks in your list.
-      </Typography>
-    ) : (
-    <Stack spacing={2} sx={{ padding: 2 }}>
-      {tasks.map((task) => (
-        <Paper key={task._id} sx={{ padding: 2, borderRadius: 2 }}>
-          <Box display="flex" flexDirection="column" gap={1}>
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{task.name}</Typography>
-            <Typography variant="body2">Due: {new Date(task.dueDate).toLocaleDateString()}</Typography>
-            <Typography variant="body2">Priority: {task.priority}</Typography>
-            <Typography variant="body2">Points: {task.points}</Typography>
-          </Box>
-        </Paper>
-      ))}
-    </Stack>
-  )}
+    <Box>
+      <Tabs 
+        value={tabValue} 
+        onChange={handleTabChange} 
+        aria-label="task tabs"
+        sx={{
+          '& .MuiTabs-indicator': {
+            backgroundColor: theme.palette.secondary.main,
+          },
+          '& .MuiTab-root': {
+            minWidth: 'auto',
+            padding: '6px 12px', // Reduce padding here
+            color: theme.palette.text.primary,
+          },
+        }}
+      >
+        <Tab label="My Tasks" />
+        <Tab label="Unassigned Tasks" />
+        <Tab label="Completed Tasks" />
+      </Tabs>
+      <Box sx={{ mt: 2 }}>
+        {filterTasks().map((task) => (
+          <TaskCard
+            key={task._id}
+            task={task}
+            currentUser={currentUser}
+            refreshTasks={fetchTasks}
+            showAssignedUser={tabValue === 1}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+          />
+        ))}
+      </Box>
     </Box>
   );
 };

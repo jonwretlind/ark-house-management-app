@@ -10,10 +10,23 @@ const taskSchema = new mongoose.Schema({
   isCompleted: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false },
   points: { type: Number, required: true },
-  priority: { type: Number, default: 1 },  // New field for priority
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  priority: {
+    type: Number,
+    default: 1000, // Set a high default value
+    min: 1 // Ensure priority is at least 1
+  },
+  assignedTo: { 
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+    validate: {
+      validator: function(v) {
+        return v === null || v === "Unassigned" || mongoose.Types.ObjectId.isValid(v);
+      },
+      message: props => `${props.value} is not a valid assigned user!`
+    }
+  },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  image: { type: String, required: false}, // Store image URL or base64
+  icon: { type: String, required: false },
 });
 
 const Task = mongoose.model('Task', taskSchema);

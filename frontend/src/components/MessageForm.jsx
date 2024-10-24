@@ -1,26 +1,16 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
+import { TextField } from '@mui/material';
 import axios from '../utils/api';
-import { useTheme } from '@mui/material/styles';
+import CustomDialog from './CustomDialog';
 
 const MessageForm = ({ open, handleClose, refreshMessages }) => {
   const [message, setMessage] = useState('');
-  const theme = useTheme();
-
-  const glassyBoxStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '15px',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-  };
 
   const handleChange = (e) => {
     setMessage(e.target.value);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     try {
       await axios.post('/messages', { content: message }, { withCredentials: true });
       refreshMessages();
@@ -31,34 +21,23 @@ const MessageForm = ({ open, handleClose, refreshMessages }) => {
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <CustomDialog
+      open={open}
       onClose={handleClose}
-      PaperProps={{
-        style: {
-          ...glassyBoxStyle,
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        },
-      }}
+      onSubmit={handleSubmit}
+      title="Create New Message"
     >
-      <DialogTitle>Create New Message</DialogTitle>
-      <DialogContent>
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Message"
-          multiline
-          rows={4}
-          value={message}
-          onChange={handleChange}
-          inputProps={{ maxLength: 250 }}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary">Cancel</Button>
-        <Button onClick={handleSubmit} color="primary">Create</Button>
-      </DialogActions>
-    </Dialog>
+      <TextField
+        fullWidth
+        margin="normal"
+        label="Message"
+        multiline
+        rows={4}
+        value={message}
+        onChange={handleChange}
+        inputProps={{ maxLength: 250 }}
+      />
+    </CustomDialog>
   );
 };
 

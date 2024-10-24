@@ -79,11 +79,12 @@ const StartScreen = () => {
           alignItems: 'center',
           justifyContent: 'center',
           backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: '120% 120%', // Enlarge the background to 120%
-          backgroundPosition: '5% 78%',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           backgroundAttachment: 'fixed',
           position: 'relative',
-          paddingTop: '15vh', // Add top padding to lower the content
+          paddingTop: '15vh',
         }}
       >
         <Box 
@@ -116,6 +117,16 @@ const StartScreen = () => {
                 variant="outlined"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.secondary.main,
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: theme.palette.secondary.main,
+                  },
+                }}
               />
               <TextField
                 fullWidth
@@ -125,15 +136,30 @@ const StartScreen = () => {
                 variant="outlined"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.secondary.main,
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: theme.palette.secondary.main,
+                  },
+                }}
               />
               {error && <Alert severity="error">{error}</Alert>}
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                color="primary"
+                color="secondary"
                 size="large"
-                sx={{ mt: 2 }}
+                sx={{ 
+                  mt: 2,
+                  '&:hover': {
+                    backgroundColor: theme.palette.secondary.dark,
+                  },
+                }}
               >
                 Login
               </Button>

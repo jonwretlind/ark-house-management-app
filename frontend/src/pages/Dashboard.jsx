@@ -16,6 +16,11 @@ import BibleVerseScroll from '../components/BibleVerseScroll';
 import ScrollingFeed from '../components/ScrollingFeed';
 import EventForm from '../components/EventForm';
 import MessageForm from '../components/MessageForm';
+import EventCard from '../components/EventCard';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import EventIcon from '@mui/icons-material/Event';
+import { useSwipeable } from 'react-swipeable';
+import { Badge } from '@mui/material';
 
 const theme = createTheme({
   palette: {
@@ -67,7 +72,17 @@ const Dashboard = () => {
   const [messageFormOpen, setMessageFormOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [feed, setFeed] = useState([]);
+  const [events, setEvents] = useState([]);
   const navigate = useNavigate(); // React Router navigation hook
+  const [currentEventIndex, setCurrentEventIndex] = useState(0);
+  const [hasEvents, setHasEvents] = useState(false);
+  const [hasNewEvents, setHasNewEvents] = useState(false);
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => navigate('/events'),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -75,6 +90,7 @@ const Dashboard = () => {
         const userResponse = await axios.get('/auth/me', { withCredentials: true });
         setUser(userResponse.data);
         setIsAdmin(userResponse.data.isAdmin);
+        console.log('User data fetched:', userResponse.data); // Add this line
 
         // Fetch tasks if the user is authenticated
         const tasksResponse = await axios.get('/tasks', { withCredentials: true });
@@ -82,7 +98,7 @@ const Dashboard = () => {
 
         await refreshFeed();
       } catch (error) {
-        console.error('Authentication failed, redirecting to login...');
+        console.error('Authentication failed, redirecting to login...', error);
         navigate('/');
       } finally {
         setLoading(false);
@@ -90,7 +106,7 @@ const Dashboard = () => {
     };
 
     fetchUserData();
-  }, [navigate]); // Remove navigate from the dependency array
+  }, []);
 
   // Updated logout function
   const handleLogout = async () => {
@@ -109,11 +125,18 @@ const Dashboard = () => {
         axios.get('/events', { withCredentials: true }),
         axios.get('/messages', { withCredentials: true })
       ]);
+
+      // Check if eventsRes.data is an object with an 'events' property
+      const events = eventsRes.data.events || [];
+      const messages = messagesRes.data || [];
+
       const combinedFeed = [
-        ...eventsRes.data.map(event => ({ ...event, type: 'event' })),
-        ...messagesRes.data.map(message => ({ ...message, type: 'message' }))
+        ...events.map(event => ({ ...event, type: 'event' })),
+        ...messages.map(message => ({ ...message, type: 'message' }))
       ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
       setFeed(combinedFeed);
+      setHasNewEvents(eventsRes.data.hasNewEvents);
     } catch (error) {
       console.error('Error fetching feed:', error);
     }
@@ -139,6 +162,46 @@ const Dashboard = () => {
     marginBottom: 2,
   };
 
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await axios.get('/events', { withCredentials: true });
+        setEvents(response.data);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
+  const handleEventScroll = (index) => {
+    setCurrentEventIndex(index);
+  };
+
+  useEffect(() => {
+    const checkEvents = async () => {
+      try {
+        const response = await axios.get('/events', { withCredentials: true });
+        setHasNewEvents(response.data.hasNewEvents);
+      } catch (error) {
+        console.error('Error checking events:', error);
+      }
+    };
+
+    checkEvents();
+  }, []);
+
+  const handleEventIconClick = async () => {
+    try {
+      await axios.post('/events/mark-viewed', {}, { withCredentials: true });
+      setHasNewEvents(false);
+      navigate('/events');
+    } catch (error) {
+      console.error('Error marking events as viewed:', error);
+    }
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -152,6 +215,7 @@ const Dashboard = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
+        {...handlers}
         sx={{
           minHeight: '100vh',
           display: 'flex',
@@ -159,11 +223,12 @@ const Dashboard = () => {
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           backgroundAttachment: 'fixed',
         }}
       >
         <AppBar 
-          position="static" 
+          position="sticky"
           elevation={0} 
           sx={{ 
             backgroundColor: 'black',
@@ -191,6 +256,18 @@ const Dashboard = () => {
               onClick={toggleMenu}
             >
               <MenuIcon />
+            </IconButton>
+            <IconButton
+              color="inherit"
+              onClick={handleEventIconClick}
+            >
+              <Badge
+                variant="dot"
+                color="error"
+                invisible={!hasNewEvents}
+              >
+                <EventIcon />
+              </Badge>
             </IconButton>
           </Toolbar>
         </AppBar>
@@ -230,19 +307,13 @@ const Dashboard = () => {
               fontWeight: 'bold',
               textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
             }}>
-              The Ark Sober Living Dashboard
+              My Dashboard
             </Typography>
           </Box>
           
           <Box>
             <BibleVerseScroll />
           </Box>
-
-          {feed && feed.length > 0 && (
-            <Box sx={glassyBoxStyle}>
-              <ScrollingFeed feed={feed} />
-            </Box>
-          )}
 
           <Box sx={glassyBoxStyle}>
             {isAdmin ? (

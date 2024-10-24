@@ -1,59 +1,50 @@
-import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { TextField } from '@mui/material';
 import axios from '../utils/api';
-import { useTheme } from '@mui/material/styles';
+import CustomDialog from './CustomDialog';
 
-const EventForm = ({ open, handleClose, refreshEvents }) => {
-  const [event, setEvent] = useState({ name: '', location: '', date: '', time: '', description: '' });
-  const theme = useTheme();
+const EventForm = ({ open, handleClose, refreshEvents, event }) => {
+  const [eventData, setEventData] = useState({ name: '', location: '', date: '', time: '', description: '' });
 
-  const glassyBoxStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '15px',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-  };
+  useEffect(() => {
+    if (event) {
+      setEventData(event);
+    } else {
+      setEventData({ name: '', location: '', date: '', time: '', description: '' });
+    }
+  }, [event]);
 
   const handleChange = (e) => {
-    setEvent({ ...event, [e.target.name]: e.target.value });
+    setEventData({ ...eventData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     try {
-      await axios.post('/events', event, { withCredentials: true });
+      if (event) {
+        await axios.put(`/events/${event._id}`, eventData, { withCredentials: true });
+      } else {
+        await axios.post('/events', eventData, { withCredentials: true });
+      }
       refreshEvents();
       handleClose();
     } catch (error) {
-      console.error('Error creating event:', error);
+      console.error('Error saving event:', error);
     }
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <CustomDialog
+      open={open}
       onClose={handleClose}
-      PaperProps={{
-        style: {
-          ...glassyBoxStyle,
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        },
-      }}
+      onSubmit={handleSubmit}
+      title={event ? 'Edit Event' : 'Create New Event'}
     >
-      <DialogTitle>Create New Event</DialogTitle>
-      <DialogContent>
-        <TextField fullWidth margin="normal" name="name" label="Event Name" onChange={handleChange} />
-        <TextField fullWidth margin="normal" name="location" label="Location" onChange={handleChange} />
-        <TextField fullWidth margin="normal" name="date" label="Date" type="date" InputLabelProps={{ shrink: true }} onChange={handleChange} />
-        <TextField fullWidth margin="normal" name="time" label="Time" type="time" InputLabelProps={{ shrink: true }} onChange={handleChange} />
-        <TextField fullWidth margin="normal" name="description" label="Description" multiline rows={4} onChange={handleChange} />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary">Cancel</Button>
-        <Button onClick={handleSubmit} color="primary">Create</Button>
-      </DialogActions>
-    </Dialog>
+      <TextField fullWidth margin="normal" name="name" label="Event Name" value={eventData.name} onChange={handleChange} />
+      <TextField fullWidth margin="normal" name="location" label="Location" value={eventData.location} onChange={handleChange} />
+      <TextField fullWidth margin="normal" name="date" label="Date" type="date" InputLabelProps={{ shrink: true }} value={eventData.date} onChange={handleChange} />
+      <TextField fullWidth margin="normal" name="time" label="Time" type="time" InputLabelProps={{ shrink: true }} value={eventData.time} onChange={handleChange} />
+      <TextField fullWidth margin="normal" name="description" label="Description" multiline rows={4} value={eventData.description} onChange={handleChange} />
+    </CustomDialog>
   );
 };
 

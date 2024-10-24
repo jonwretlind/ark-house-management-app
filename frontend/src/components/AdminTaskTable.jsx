@@ -29,6 +29,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import TaskCard from './TaskCard';
 import update from 'immutability-helper';
+import CustomDialog from './CustomDialog';
 
 // Import all icon images from the assets/icons folder
 import logo from '../../assets/logo.png';
@@ -51,7 +52,7 @@ const LightTab = styled(Tab)(({ theme }) => ({
   },
 }));
 
-const TaskItem = ({ task, index, moveTask, onEdit, onDelete, tabIndex }) => {
+const TaskItem = ({ task, index, moveTask, onEdit, onDelete, tabIndex, currentUser, refreshTasks }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'TASK',
     item: { id: task._id, index },
@@ -84,6 +85,8 @@ const TaskItem = ({ task, index, moveTask, onEdit, onDelete, tabIndex }) => {
         onDelete={onDelete}
         isDragging={isDragging}
         showAssignedUser={tabIndex === 2}
+        currentUser={currentUser}
+        refreshTasks={refreshTasks}
       />
     </div>
   );
@@ -294,6 +297,15 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
 
   const [userTasks, unassignedTasks, otherUserTasks] = useMemo(() => filterTasks(internalTasks), [filterTasks, internalTasks]);
 
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get('/tasks', { withCredentials: true });
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
+
   const renderTaskList = (taskList, tabIndex) => (
     <div>
       {taskList.map((task, index) => (
@@ -305,6 +317,8 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
           onEdit={handleEditTask}
           onDelete={handleDeleteTask}
           tabIndex={tabIndex}
+          currentUser={currentUser}
+          refreshTasks={fetchTasks}
         />
       ))}
     </div>
@@ -331,10 +345,13 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
             '& .MuiTabs-indicator': {
               backgroundColor: theme.palette.secondary.main,
             },
-            // Remove background and box shadow
             '& .MuiTabs-flexContainer': {
               backgroundColor: 'transparent',
               boxShadow: 'none',
+            },
+            '& .MuiTab-root': {
+              minWidth: 'auto',
+              padding: '6px 12px', // Reduce padding here
             },
           }}
         >
@@ -365,65 +382,54 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
           <AddIcon />
         </IconButton>
 
-        <Dialog 
-          open={open} 
+        <CustomDialog
+          open={open}
           onClose={() => setOpen(false)}
-          PaperProps={{
-            sx: {
-              ...glassyBoxStyle,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            },
-          }}
+          onSubmit={handleCreateOrUpdateTask}
+          title={newTask._id ? 'Edit Task' : 'Create New Task'}
         >
-          <DialogTitle>{newTask._id ? 'Edit Task' : 'Create New Task'}</DialogTitle>
-          <DialogContent>
-            <TextField name="name" label="Task Name" fullWidth value={newTask.name} onChange={handleChange} sx={{ mt: 2 }} />
-            <TextField name="description" label="Description" fullWidth value={newTask.description} onChange={handleChange} sx={{ mt: 2 }} />
-            <TextField name="dueDate" type="date" fullWidth value={newTask.dueDate} onChange={handleChange} sx={{ mt: 2 }} InputLabelProps={{ shrink: true }} />
-            <TextField name="points" type="number" fullWidth value={newTask.points} onChange={handleChange} sx={{ mt: 2 }} />
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Assign To</InputLabel>
-              <Select name="assignedTo" value={newTask.assignedTo} onChange={handleChange}>
-                <MenuItem value="">Unassigned</MenuItem>
-                {users.map((user) => (
-                  <MenuItem key={user._id} value={user._id}>
-                    {user.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Icon</InputLabel>
-              <Select
-                name="icon"
-                value={newTask.icon}
-                onChange={handleChange}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <img src={selected || logo} alt="Task icon" style={{ width: 30, height: 30, marginRight: 10 }} />
-                    {selected ? selected.split('/').pop() : 'Default Logo'}
-                  </Box>
-                )}
-              >
-                <MenuItem value="">
-                  <em>Default Logo</em>
+          <TextField name="name" label="Task Name" fullWidth value={newTask.name} onChange={handleChange} sx={{ mt: 2 }} />
+          <TextField name="description" label="Description" fullWidth value={newTask.description} onChange={handleChange} sx={{ mt: 2 }} />
+          <TextField name="dueDate" type="date" fullWidth value={newTask.dueDate} onChange={handleChange} sx={{ mt: 2 }} InputLabelProps={{ shrink: true }} />
+          <TextField name="points" type="number" fullWidth value={newTask.points} onChange={handleChange} sx={{ mt: 2 }} />
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Assign To</InputLabel>
+            <Select name="assignedTo" value={newTask.assignedTo} onChange={handleChange}>
+              <MenuItem value="">Unassigned</MenuItem>
+              {users.map((user) => (
+                <MenuItem key={user._id} value={user._id}>
+                  {user.name}
                 </MenuItem>
-                {iconOptions.map((icon, index) => (
-                  <MenuItem key={index} value={icon}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <img src={icon} alt={`Icon ${index + 1}`} style={{ width: 30, height: 30, marginRight: 10 }} />
-                      {icon.split('/').pop()}
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateOrUpdateTask}>{newTask._id ? 'Update' : 'Create'}</Button>
-          </DialogActions>
-        </Dialog>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Icon</InputLabel>
+            <Select
+              name="icon"
+              value={newTask.icon}
+              onChange={handleChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <img src={selected || logo} alt="Task icon" style={{ width: 30, height: 30, marginRight: 10 }} />
+                  {selected ? selected.split('/').pop() : 'Default Logo'}
+                </Box>
+              )}
+            >
+              <MenuItem value="">
+                <em>Default Logo</em>
+              </MenuItem>
+              {iconOptions.map((icon, index) => (
+                <MenuItem key={index} value={icon}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <img src={icon} alt={`Icon ${index + 1}`} style={{ width: 30, height: 30, marginRight: 10 }} />
+                    {icon.split('/').pop()}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </CustomDialog>
       </Box>
     </DndProvider>
   );

@@ -2,28 +2,34 @@ import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
   typography: {
-    fontFamily: [
-      'Noto Sans',
-      'Noto Serif',
-      'sans-serif',
-    ].join(','),
+    fontFamily: 'Noto Sans, sans-serif',
+    fontWeightLight: 300,
+    fontWeightRegular: 400,
+    fontWeightMedium: 500,
+    fontWeightBold: 700,
     h1: {
-      fontFamily: 'Noto Serif, serif',
+      fontWeight: 700,
     },
     h2: {
-      fontFamily: 'Noto Serif, serif',
+      fontWeight: 700,
     },
     h3: {
-      fontFamily: 'Noto Serif, serif',
+      fontWeight: 600,
     },
     h4: {
-      fontFamily: 'Noto Serif, serif',
+      fontWeight: 600,
     },
     h5: {
-      fontFamily: 'Noto Serif, serif',
+      fontWeight: 500,
     },
     h6: {
-      fontFamily: 'Noto Serif, serif',
+      fontWeight: 500,
+    },
+    body1: {
+      fontWeight: 400,
+    },
+    body2: {
+      fontWeight: 400,
     },
   },
   palette: {
@@ -73,21 +79,12 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            '& fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.3)',
-            },
-            '&:hover fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.5)',
-            },
             '&.Mui-focused fieldset': {
-              borderColor: '#1a4731',
+              borderColor: '#d35400', // Rusty orange
             },
           },
-          '& .MuiInputLabel-root': {
-            color: 'rgba(255, 255, 255, 0.7)',
-          },
-          '& .MuiInputBase-input': {
-            color: '#ecf0f1',
+          '& .MuiInputLabel-root.Mui-focused': {
+            color: '#d35400', // Rusty orange
           },
         },
       },
@@ -96,6 +93,42 @@ const theme = createTheme({
       styleOverrides: {
         icon: {
           color: 'rgba(255, 255, 255, 0.7)',
+        },
+      },
+    },
+    MuiInput: {
+      styleOverrides: {
+        underline: {
+          '&:after': {
+            borderBottomColor: '#d35400', // Rusty orange
+          },
+        },
+      },
+    },
+    MuiCssBaseline: {
+      styleOverrides: `
+        html {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `,
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '15px',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+          border: '1px solid rgba(255, 255, 255, 0.18)',
+        },
+      },
+    },
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          justifyContent: 'space-between',
+          padding: '16px 24px',
         },
       },
     },

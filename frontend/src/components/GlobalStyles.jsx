@@ -5,7 +5,9 @@ const GlobalStyles = () => (
   <Global
     styles={css`
       body {
-        font-family: 'Noto Sans', sans-serif;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     `}
   />

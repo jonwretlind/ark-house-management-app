@@ -1,6 +1,6 @@
 // models/User.js
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  lastEventView: {
+    type: Date,
+    default: null
+  }
 });
 
 // Password hashing pre-save hook
