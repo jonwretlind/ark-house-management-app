@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Fab } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import axios from '../utils/api';
 import EventCard from '../components/EventCard';
+import EventForm from '../components/EventForm';
 import theme from '../theme';
 import backgroundImage from '../../assets/screen2.png';
-import AddIcon from '@mui/icons-material/Add';
-import EventForm from '../components/EventForm';
 import { useNavigate } from 'react-router-dom';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const EventsScreen = () => {
   const [events, setEvents] = useState([]);
-  const [eventFormOpen, setEventFormOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [openEventForm, setOpenEventForm] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchEvents();
-    markEventsAsViewed();
+    fetchCurrentUser();
   }, []);
 
   const fetchEvents = async () => {
@@ -29,17 +29,32 @@ const EventsScreen = () => {
     }
   };
 
-  const markEventsAsViewed = async () => {
+  const fetchCurrentUser = async () => {
     try {
-      await axios.post('/events/mark-viewed', {}, { withCredentials: true });
+      const response = await axios.get('/auth/me', { withCredentials: true });
+      setCurrentUser(response.data);
     } catch (error) {
-      console.error('Error marking events as viewed:', error);
+      console.error('Error fetching current user:', error);
     }
   };
 
-  const handleEditEvent = (event) => {
-    setSelectedEvent(event);
-    setEventFormOpen(true);
+  const handleCreateEvent = async (eventData) => {
+    try {
+      await axios.post('/events', eventData, { withCredentials: true });
+      setOpenEventForm(false);
+      fetchEvents();
+    } catch (error) {
+      console.error('Error creating event:', error);
+    }
+  };
+
+  const handleEditEvent = async (eventId, eventData) => {
+    try {
+      await axios.put(`/events/${eventId}`, eventData, { withCredentials: true });
+      fetchEvents();
+    } catch (error) {
+      console.error('Error editing event:', error);
+    }
   };
 
   const handleDeleteEvent = async (eventId) => {
@@ -49,21 +64,6 @@ const EventsScreen = () => {
     } catch (error) {
       console.error('Error deleting event:', error);
     }
-  };
-
-  const handleCloseForm = () => {
-    setEventFormOpen(false);
-    setSelectedEvent(null);
-  };
-
-  const glassyBoxStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '15px',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-    padding: 2,
-    marginBottom: 2,
   };
 
   return (
@@ -85,7 +85,7 @@ const EventsScreen = () => {
           position="sticky"
           elevation={0} 
           sx={{ 
-            backgroundColor: theme.palette.primary.main, // Changed to dark green
+            backgroundColor: theme.palette.primary.main,
             borderTopLeftRadius: '0px',
             borderTopRightRadius: '0px',
             borderBottomLeftRadius: '15px',
@@ -115,41 +115,37 @@ const EventsScreen = () => {
           mb: 4,
           padding: '2rem',
         }}>
-          <Box sx={{ ...glassyBoxStyle, position: 'relative', minHeight: '200px' }}>
-            {events.map((event) => (
-              <EventCard 
-                key={event._id} 
-                event={event} 
-                onEdit={handleEditEvent}
-                onDelete={handleDeleteEvent}
-              />
-            ))}
-
-            <IconButton 
-              onClick={() => setEventFormOpen(true)} 
-              sx={{ 
-                position: 'relative',
-                bottom: 0,
-                left: 0,
-                ...glassyBoxStyle,
-                width: 56,
-                height: 56,
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                },
-              }} 
-              aria-label="add event"
-            >
-              <AddIcon />
-            </IconButton>
-          </Box>
+          {events.map((event) => (
+            <EventCard
+              key={event._id}
+              event={event}
+              onEdit={handleEditEvent}
+              onDelete={handleDeleteEvent}
+              currentUser={currentUser}
+              refreshEvents={fetchEvents}
+            />
+          ))}
         </Container>
 
-        <EventForm 
-          open={eventFormOpen} 
-          handleClose={handleCloseForm} 
-          refreshEvents={fetchEvents}
-          event={selectedEvent}
+        {currentUser && currentUser.isAdmin && (
+          <Fab 
+            color="primary" 
+            aria-label="add" 
+            onClick={() => setOpenEventForm(true)}
+            sx={{
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        )}
+
+        <EventForm
+          open={openEventForm}
+          handleClose={() => setOpenEventForm(false)}
+          handleSubmit={handleCreateEvent}
         />
       </Box>
     </ThemeProvider>

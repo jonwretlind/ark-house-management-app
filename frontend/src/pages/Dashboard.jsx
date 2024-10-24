@@ -5,10 +5,11 @@ import axios from '../utils/api'; // Axios instance for API calls
 import AdminTaskTable from '../components/AdminTaskTable'; // Admin task management
 import UserAvatar from '../components/UserAvatar'; // User avatar and info display
 import TaskList from '../components/TaskList'; // Task list for non-admins
+import MyEventsList from '../components/MyEventsList'; // Import the new component
 import { 
   Box, Container, AppBar, Toolbar, Typography, Button, Avatar, 
-  CircularProgress, IconButton, Drawer, List, ListItem, ListItemText,
-  ThemeProvider, createTheme, CssBaseline
+  CircularProgress, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText,
+  ThemeProvider, createTheme, CssBaseline, Badge
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import backgroundImage from '../../assets/screen2.png';
@@ -19,8 +20,10 @@ import MessageForm from '../components/MessageForm';
 import EventCard from '../components/EventCard';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import EventIcon from '@mui/icons-material/Event';
+import MessageIcon from '@mui/icons-material/Message';
 import { useSwipeable } from 'react-swipeable';
-import { Badge } from '@mui/material';
+import ActiveMessageDialog from '../components/ActiveMessageDialog';
+import MessagesDialog from '../components/MessagesDialog';
 
 const theme = createTheme({
   palette: {
@@ -77,6 +80,12 @@ const Dashboard = () => {
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [hasEvents, setHasEvents] = useState(false);
   const [hasNewEvents, setHasNewEvents] = useState(false);
+  const [activeMessage, setActiveMessage] = useState(null);
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
+  const [messagesDialogOpen, setMessagesDialogOpen] = useState(false);
+  const [recentMessage, setRecentMessage] = useState(null);
+  const [hasUnviewedMessages, setHasUnviewedMessages] = useState(false);
+  const [myEvents, setMyEvents] = useState([]);
 
   const handlers = useSwipeable({
     onSwipedLeft: () => navigate('/events'),
@@ -90,11 +99,27 @@ const Dashboard = () => {
         const userResponse = await axios.get('/auth/me', { withCredentials: true });
         setUser(userResponse.data);
         setIsAdmin(userResponse.data.isAdmin);
-        console.log('User data fetched:', userResponse.data); // Add this line
+        console.log('User data fetched:', userResponse.data);
 
         // Fetch tasks if the user is authenticated
         const tasksResponse = await axios.get('/tasks', { withCredentials: true });
         setTasks(tasksResponse.data);
+
+        // Fetch user's RSVPed events
+        const myEventsResponse = await axios.get('/events/my-events', { withCredentials: true });
+        setMyEvents(myEventsResponse.data);
+
+        // Fetch active message
+        const activeMessageResponse = await axios.get('/messages/active', { withCredentials: true });
+        setActiveMessage(activeMessageResponse.data);
+
+        // Fetch the most recent message
+        const recentMessageResponse = await axios.get('/messages/recent', { withCredentials: true });
+        setRecentMessage(recentMessageResponse.data);
+
+        // Check for unviewed messages
+        const unviewedResponse = await axios.get('/messages/unviewed', { withCredentials: true });
+        setHasUnviewedMessages(unviewedResponse.data.hasUnviewed);
 
         await refreshFeed();
       } catch (error) {
@@ -147,8 +172,15 @@ const Dashboard = () => {
   };
 
   const menuItems = [
-    { text: 'Create Event', onClick: () => { setEventFormOpen(true); setMenuOpen(false); } },
+    { text: 'Leaderboard', onClick: () => { navigate('/leaderboard'); setMenuOpen(false); } },
+    { text: 'All Tasks', onClick: () => { navigate('/all-tasks'); setMenuOpen(false); } },
+    ...(isAdmin ? [
+      { text: 'Create Event', onClick: () => { setEventFormOpen(true); setMenuOpen(false); } },
     { text: 'Create Message', onClick: () => { setMessageFormOpen(true); setMenuOpen(false); } },
+      { text: 'Register User', onClick: () => { navigate('/register-user'); setMenuOpen(false); } },
+      { text: 'Manage Users', onClick: () => { navigate('/manage-users'); setMenuOpen(false); } },
+      { text: 'Completed Tasks', onClick: () => { navigate('/completed-tasks'); setMenuOpen(false); } }
+    ] : []),
     { text: 'Logout', onClick: handleLogout },
   ];
 
@@ -200,6 +232,12 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error marking events as viewed:', error);
     }
+  };
+
+  const handleMessagesClick = async () => {
+    setMessagesDialogOpen(true);
+    setHasUnviewedMessages(false);
+    // The backend will mark the messages as viewed when fetching them
   };
 
   if (loading) {
@@ -269,6 +307,18 @@ const Dashboard = () => {
                 <EventIcon />
               </Badge>
             </IconButton>
+            <IconButton
+              color="inherit"
+              onClick={handleMessagesClick}
+            >
+              <Badge
+                variant="dot"
+                color="error"
+                invisible={!hasUnviewedMessages}
+              >
+                <MessageIcon />
+              </Badge>
+            </IconButton>
           </Toolbar>
         </AppBar>
 
@@ -285,8 +335,10 @@ const Dashboard = () => {
         >
           <List>
             {menuItems.map((item, index) => (
-              <ListItem button key={index} onClick={item.onClick}>
-                <ListItemText primary={item.text} />
+              <ListItem key={index} disablePadding>
+                <ListItemButton onClick={item.onClick}>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
               </ListItem>
             ))}
           </List>
@@ -322,10 +374,26 @@ const Dashboard = () => {
               <TaskList tasks={tasks} setTasks={setTasks} currentUser={user} />
             )}
           </Box>
+
+          {/* Only render MyEventsList if there are events */}
+          {myEvents.length > 0 && (
+            <Box sx={glassyBoxStyle}>
+              <MyEventsList events={myEvents} />
+            </Box>
+          )}
         </Container>
 
         <EventForm open={eventFormOpen} handleClose={() => setEventFormOpen(false)} refreshEvents={refreshFeed} />
         <MessageForm open={messageFormOpen} handleClose={() => setMessageFormOpen(false)} refreshMessages={refreshFeed} />
+        <ActiveMessageDialog
+          open={messageDialogOpen}
+          onClose={() => setMessageDialogOpen(false)}
+          message={activeMessage}
+        />
+        <MessagesDialog
+          open={messagesDialogOpen}
+          onClose={() => setMessagesDialogOpen(false)}
+        />
       </Box>
     </ThemeProvider>
   );

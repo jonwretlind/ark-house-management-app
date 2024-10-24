@@ -103,10 +103,10 @@ const StartScreen = () => {
 
         <Container maxWidth="sm">
           <Box sx={glassyBoxStyle}>
-            <Typography variant="h4" component="h1" gutterBottom color="text.primary">
+            <Typography variant="h4" component="h2" gutterBottom color="text.primary">
               Welcome to the Ark
             </Typography>
-            <Typography variant="h6" component="h2" gutterBottom color="text.primary">
+            <Typography variant="h6" component="h3" gutterBottom color="text.primary">
               Christ-Centered Sober Living
             </Typography>
             <form onSubmit={handleLogin}>

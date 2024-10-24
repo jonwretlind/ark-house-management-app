@@ -4,7 +4,7 @@ import User from '../models/User.js';
 // Get all users
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}, 'name email'); // Select relevant fields
+    const users = await User.find({}, 'name email phone isAdmin'); // Include phone and isAdmin fields
     res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -15,14 +15,14 @@ export const getAllUsers = async (req, res) => {
 // Get a user by ID
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.userId).select('name');
     if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json(user);
+    res.json(user);
   } catch (error) {
-    console.error('Error fetching user by ID:', error);
-    res.status(500).json({ message: 'Failed to fetch user.' });
+    console.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -79,5 +79,17 @@ export const deleteUser = async (req, res) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({ message: 'Failed to delete user.' });
+  }
+};
+
+export const getLeaderboard = async (req, res) => {
+  try {
+    const users = await User.find({}, 'name avatarUrl accountBalance')
+      .sort({ accountBalance: -1 })
+      .limit(10);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ message: 'Failed to fetch leaderboard.' });
   }
 };

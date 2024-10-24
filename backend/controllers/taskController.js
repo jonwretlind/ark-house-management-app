@@ -1,5 +1,6 @@
 import Task from '../models/Task.js';
 import mongoose from 'mongoose';
+import User from '../models/User.js';
 
 // Get a task by ID
 export const getTaskById = async (req, res) => {
@@ -156,7 +157,8 @@ export const completeTask = async (req, res) => {
     if (task.assignedTo.toString() !== req.user.id) {
       return res.status(403).json({ message: 'You can only complete your own tasks' });
     }
-    task.isCompleted = true;
+    task.status = 'pending_approval';
+    task.completedAt = new Date();
     await task.save();
     res.json(task);
   } catch (error) {
@@ -192,5 +194,50 @@ export const assignTask = async (req, res) => {
   } catch (error) {
     console.error('Error in assignTask:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const unassignTask = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    task.assignedTo = "Unassigned";
+    task.isCompleted = false; // Set isCompleted to false
+    task.status = 'active'; // Set status to active
+    await task.save();
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const approveTask = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can approve tasks' });
+    }
+    task.status = 'completed'; // Set status to completed
+    task.isCompleted = true; // Set isCompleted to true
+    task.approvedBy = req.user.id;
+    task.approvedAt = new Date();
+    await task.save();
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getCompletedTasks = async (req, res) => {
+  try {
+    const completedTasks = await Task.find({ isCompleted: true }); // Use isCompleted property
+    res.status(200).json(completedTasks);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching completed tasks', error });
   }
 };

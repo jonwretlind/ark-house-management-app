@@ -1,55 +1,80 @@
-import React from 'react';
-import { Card, CardContent, Typography, Box, IconButton } from '@mui/material';
-import { format, parse } from 'date-fns';
-import { useTheme } from '@mui/material/styles';
+import React, { useState } from 'react';
+import { Card, CardContent, Typography, IconButton, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EventIcon from '@mui/icons-material/Event';
+import axios from '../utils/api';
+import { useTheme } from '@mui/material/styles';
 
-const EventCard = ({ event, onEdit, onDelete }) => {
+const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents }) => {
+  const [isRSVPed, setIsRSVPed] = useState(event.attendees && Array.isArray(event.attendees) && currentUser && event.attendees.includes(currentUser._id));
   const theme = useTheme();
 
-  const formatTime = (timeString) => {
-    const date = parse(timeString, 'HH:mm', new Date());
-    return format(date, 'h:mm a');
+  const handleRSVP = async () => {
+    if (!currentUser) {
+      console.error('No current user');
+      return;
+    }
+    try {
+      console.log('Sending RSVP request for event:', event._id);
+      const response = await axios.post(`/events/${event._id}/rsvp`, {}, { withCredentials: true });
+      console.log('RSVP response:', response.data);
+      setIsRSVPed(response.data.isAttending);
+      refreshEvents();
+    } catch (error) {
+      console.error('Error RSVPing to event:', error.response?.data || error.message);
+      // You might want to show an error message to the user here
+    }
   };
 
   return (
-    <Card sx={{
-      backgroundColor: 'rgba(255, 255, 255, 0.7)',
-      backdropFilter: 'blur(10px)',
-      borderRadius: '15px',
-      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-      border: '1px solid rgba(255, 255, 255, 0.18)',
-      padding: 2,
-      marginBottom: 2,
-      transition: 'all 0.3s ease',
-      position: 'relative',
-      '&:hover': {
-        transform: 'translateY(-5px)',
-        boxShadow: '0 15px 30px rgba(0,0,0,0.3)',
-        backgroundColor: 'rgba(255,255,255,0.8)',
-      },
-    }}>
-      <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex' }}>
-        <IconButton onClick={() => onEdit(event)} aria-label="edit" size="small" sx={{ color: theme.palette.primary.main }}>
-          <EditIcon fontSize="small" />
-        </IconButton>
-        <IconButton onClick={() => onDelete(event._id)} aria-label="delete" size="small" sx={{ color: theme.palette.secondary.main }}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </Box>
+    <Card sx={{ mb: 2, backgroundColor: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)' }}>
       <CardContent>
-        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: theme.palette.primary.main, mb: 1 }}>
-          {event.name}
-        </Typography>
-        <Typography sx={{ mb: 1, color: 'rgba(0, 0, 0, 0.7)' }}>
-          {format(new Date(event.date), 'MMMM d, yyyy')} at {formatTime(event.time)}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              color: theme.palette.primary.main, 
+              fontWeight: 'bold', 
+              fontSize: '1.2rem', 
+              letterSpacing: '-.25px'
+            }}
+          >
+            {event.name}
+          </Typography>
+          <Box>
+            {currentUser && currentUser.isAdmin && (
+              <>
+                <IconButton onClick={() => onEdit(event)} size="small">
+                  <EditIcon />
+                </IconButton>
+                <IconButton onClick={() => onDelete(event._id)} size="small">
+                  <DeleteIcon />
+                </IconButton>
+              </>
+            )}
+            {currentUser && (
+              <IconButton onClick={handleRSVP} color={isRSVPed ? "primary" : "default"} size="small">
+                <EventIcon />
+              </IconButton>
+            )}
+          </Box>
+        </Box>
         <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 1 }}>
+          {event.description}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>
+          Date: {new Date(event.date).toLocaleDateString()}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>
+          Time: {event.time}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>
           Location: {event.location}
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)' }}>
-          {event.description}
+          Attendees: {event.attendees ? event.attendees.length : 0}
         </Typography>
       </CardContent>
     </Card>

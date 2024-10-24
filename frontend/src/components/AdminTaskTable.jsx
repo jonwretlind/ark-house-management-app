@@ -112,22 +112,25 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
   const filterTasks = useCallback((tasks) => {
     const userTasks = tasks.filter(task => 
       task.assignedTo && 
-      (task.assignedTo._id === currentUser._id || task.assignedTo === currentUser._id)
+      (task.assignedTo._id === currentUser._id || task.assignedTo === currentUser._id) &&
+      task.status === 'active'
     );
     const unassignedTasks = tasks.filter(task => 
       !task.assignedTo || 
       task.assignedTo === "Unassigned" || 
       (task.assignedTo && task.assignedTo.name === "Unassigned")
     );
+    const pendingTasks = tasks.filter(task => task.status === 'pending_approval');
     const otherUserTasks = tasks.filter(task => 
       task.assignedTo && 
       task.assignedTo !== "Unassigned" && 
       task.assignedTo._id !== currentUser._id && 
       task.assignedTo !== currentUser._id &&
-      task.assignedTo.name !== "Unassigned"
+      task.assignedTo.name !== "Unassigned" &&
+      task.status === 'active'
     );
-    console.log('Filtered tasks:', { userTasks, unassignedTasks, otherUserTasks });
-    return [userTasks, unassignedTasks, otherUserTasks];
+    console.log('Filtered tasks:', { userTasks, unassignedTasks, pendingTasks, otherUserTasks });
+    return [userTasks, unassignedTasks, pendingTasks, otherUserTasks];
   }, [currentUser]);
 
   useEffect(() => {
@@ -140,9 +143,10 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
       setInternalTasks(formattedTasks);
       console.log('Formatted tasks:', formattedTasks);
       
-      const [userTasks, unassignedTasks, otherUserTasks] = filterTasks(formattedTasks);
+      const [userTasks, unassignedTasks, pendingTasks, otherUserTasks] = filterTasks(formattedTasks);
       console.log('User tasks:', userTasks);
       console.log('Unassigned:', unassignedTasks);
+      console.log('Pending:', pendingTasks);
       console.log('Other:', otherUserTasks);
     }
   }, [tasks, filterTasks]);
@@ -295,7 +299,31 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
     setTabValue(newValue);
   };
 
-  const [userTasks, unassignedTasks, otherUserTasks] = useMemo(() => filterTasks(internalTasks), [filterTasks, internalTasks]);
+  const [userTasks, unassignedTasks, pendingTasks] = useMemo(() => {
+    const userTasks = tasks.filter(task => 
+      task.assignedTo && 
+      (task.assignedTo._id === currentUser._id || task.assignedTo === currentUser._id) &&
+      task.status === 'active'
+    );
+    const unassignedTasks = tasks.filter(task => 
+      !task.assignedTo || 
+      task.assignedTo === "Unassigned" || 
+      (task.assignedTo && task.assignedTo.name === "Unassigned")
+    );
+    const pendingTasks = tasks.filter(task => task.status === 'pending_approval');
+    return [userTasks, unassignedTasks, pendingTasks];
+  }, [tasks, currentUser]);
+
+  const tabsToShow = useMemo(() => {
+    const tabs = [
+      { label: "My Tasks", content: userTasks },
+      { label: "Unassigned", content: unassignedTasks },
+    ];
+    if (pendingTasks.length > 0) {
+      tabs.push({ label: "Pending", content: pendingTasks });
+    }
+    return tabs;
+  }, [userTasks, unassignedTasks, pendingTasks]);
 
   const fetchTasks = async () => {
     try {
@@ -351,19 +379,29 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
             },
             '& .MuiTab-root': {
               minWidth: 'auto',
-              padding: '6px 12px', // Reduce padding here
+              padding: '6px 12px',
             },
           }}
         >
-          <LightTab label="My Tasks" sx={{ color: theme.palette.text.primary }} />
-          <LightTab label="Unassigned" sx={{ color: theme.palette.text.primary }} />
-          <LightTab label="Other" sx={{ color: theme.palette.text.primary }} />
+          {tabsToShow.map((tab, index) => (
+            <LightTab key={index} label={tab.label} sx={{ color: theme.palette.text.primary }} />
+          ))}
         </LightTabs>
 
         <Box sx={{ mt: 2 }}>
-          {tabValue === 0 && renderTaskList(userTasks, 0)}
-          {tabValue === 1 && renderTaskList(unassignedTasks, 1)}
-          {tabValue === 2 && renderTaskList(otherUserTasks, 2)}
+          {tabsToShow[tabValue] && tabsToShow[tabValue].content.map((task) => (
+            <TaskItem
+              key={task._id ? task._id.toString() : task.id}
+              task={task}
+              index={task.priority - 1}
+              moveTask={moveTask}
+              onEdit={handleEditTask}
+              onDelete={handleDeleteTask}
+              tabIndex={tabValue}
+              currentUser={currentUser}
+              refreshTasks={fetchTasks}
+            />
+          ))}
         </Box>
 
         <IconButton 

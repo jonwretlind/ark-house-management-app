@@ -5,8 +5,14 @@ const taskSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   description: { type: String, maxlength: 240 },
   dueDate: { type: Date, required: true },
+  status: {
+    type: String,
+    enum: ['active', 'pending_approval', 'completed'],
+    default: 'active'
+  },
   completedAt: { type: Date },
-  verifiedAt: { type: Date },
+  approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  approvedAt: { type: Date },
   isCompleted: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false },
   points: { type: Number, required: true },
