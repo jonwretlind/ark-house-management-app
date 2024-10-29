@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import taskRoutes from './routes/taskRoutes.js'; // Make sure the extension is .js
 import userRoutes from './routes/userRoutes.js'; // Import user routes
-import aiImageRoutes from './routes/aiImageRoutes.js'; // Import user routes
+
 import eventRoutes from './routes/eventRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 
@@ -26,7 +26,6 @@ app.use(cookieParser());  // Enable cookie parsing
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes); // Register tasks routes
 app.use('/api/users', userRoutes); // Use the user routes under the /api/users path
-app.use('/api/ai-image/generate-image', aiImageRoutes); // Use the ai image route
 app.use('/api/events', eventRoutes);
 app.use('/api/messages', messageRoutes);
 
@@ -38,7 +37,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
+  .then(async () => {
     console.log('MongoDB connected');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })

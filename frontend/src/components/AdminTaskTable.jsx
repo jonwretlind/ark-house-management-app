@@ -84,9 +84,9 @@ const TaskItem = ({ task, index, moveTask, onEdit, onDelete, tabIndex, currentUs
         onEdit={onEdit}
         onDelete={onDelete}
         isDragging={isDragging}
-        showAssignedUser={tabIndex === 2}
         currentUser={currentUser}
         refreshTasks={refreshTasks}
+        showAssignedTo={tabIndex === 2}
       />
     </div>
   );
@@ -295,10 +295,6 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
     }
   };
 
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-
   const [userTasks, unassignedTasks, pendingTasks] = useMemo(() => {
     const userTasks = tasks.filter(task => 
       task.assignedTo && 
@@ -314,43 +310,50 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
     return [userTasks, unassignedTasks, pendingTasks];
   }, [tasks, currentUser]);
 
-  const tabsToShow = useMemo(() => {
-    const tabs = [
-      { label: "My Tasks", content: userTasks },
-      { label: "Unassigned", content: unassignedTasks },
-    ];
-    if (pendingTasks.length > 0) {
-      tabs.push({ label: "Pending", content: pendingTasks });
-    }
-    return tabs;
-  }, [userTasks, unassignedTasks, pendingTasks]);
+  const tabsToShow = useMemo(() => [
+    { label: "My Tasks", content: userTasks },
+    { label: "Unassigned", content: unassignedTasks },
+    ...(pendingTasks.length > 0 ? [{ label: "Pending", content: pendingTasks }] : [])
+  ], [userTasks, unassignedTasks, pendingTasks]);
 
-  const fetchTasks = async () => {
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const refreshTasks = useCallback(async () => {
     try {
       const response = await axios.get('/tasks', { withCredentials: true });
       setTasks(response.data);
+      
+      // Check if we're on the pending tab and there are no more pending tasks
+      const newPendingTasks = response.data.filter(task => task.status === 'pending_approval');
+      if (tabValue === 2 && newPendingTasks.length === 0) {
+        setTabValue(0);
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
-  };
+  }, [tabValue]);
 
-  const renderTaskList = (taskList, tabIndex) => (
-    <div>
-      {taskList.map((task, index) => (
-        <TaskItem
-          key={task._id ? task._id.toString() : index}
-          task={task}
-          index={index}
-          moveTask={moveTask}
-          onEdit={handleEditTask}
-          onDelete={handleDeleteTask}
-          tabIndex={tabIndex}
-          currentUser={currentUser}
-          refreshTasks={fetchTasks}
-        />
-      ))}
-    </div>
-  );
+  const renderTaskList = (status) => {
+    const filteredTasks = tasks.filter(task => task.status === status);
+    
+    return (
+      <div>
+        {filteredTasks.map((task) => (
+          <TaskCard
+            key={task._id}
+            task={task}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+            currentUser={currentUser}
+            refreshTasks={refreshTasks}
+            showAssignedTo={status === 'pending'} // Only show assigned user for pending tasks
+          />
+        ))}
+      </div>
+    );
+  };
 
   const glassyBoxStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -399,7 +402,7 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
               onDelete={handleDeleteTask}
               tabIndex={tabValue}
               currentUser={currentUser}
-              refreshTasks={fetchTasks}
+              refreshTasks={refreshTasks}
             />
           ))}
         </Box>

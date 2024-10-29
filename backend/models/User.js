@@ -53,6 +53,34 @@ userSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.passwordHash);
 };
 
+// Add a static method to create a test admin user
+userSchema.statics.createTestUser = async function() {
+  try {
+    // Check if test user already exists
+    const existingUser = await this.findOne({ email: 'admin@example.com' });
+    if (existingUser) {
+      console.log('Test user already exists');
+      return existingUser;
+    }
+
+    // Create new test user
+    const testUser = new this({
+      name: 'Admin User',
+      email: 'admin@example.com',
+      phone: '1234567890',
+      passwordHash: 'admin123', // This will be hashed by the pre-save middleware
+      isAdmin: true
+    });
+
+    await testUser.save();
+    console.log('Test user created successfully');
+    return testUser;
+  } catch (error) {
+    console.error('Error creating test user:', error);
+    throw error;
+  }
+};
+
 const User = mongoose.model('User', userSchema);
 
 export default User;

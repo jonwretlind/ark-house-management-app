@@ -51,20 +51,36 @@ export const createTask = async (req, res) => {
 // Get all tasks
 export const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().populate('assignedTo', 'name').sort({ priority: 1 });
+    // First get all tasks without population
+    const tasks = await Task.find().sort({ priority: 1 });
 
-    const formattedTasks = tasks.map(task => {
+    // Process each task
+    const formattedTasks = await Promise.all(tasks.map(async task => {
       const taskObj = task.toObject();
-      if (!taskObj.assignedTo) {
+
+      // Handle assignedTo field
+      if (taskObj.assignedTo === "Unassigned" || !taskObj.assignedTo) {
         taskObj.assignedTo = { _id: "Unassigned", name: "Unassigned" };
+      } else if (typeof taskObj.assignedTo === 'string' && taskObj.assignedTo !== "Unassigned") {
+        // If it's a valid user ID, populate the user info
+        try {
+          const user = await User.findById(taskObj.assignedTo).select('name');
+          if (user) {
+            taskObj.assignedTo = user;
+          } else {
+            taskObj.assignedTo = { _id: "Unassigned", name: "Unassigned" };
+          }
+        } catch (error) {
+          taskObj.assignedTo = { _id: "Unassigned", name: "Unassigned" };
+        }
       }
+
       return {
         ...taskObj,
         _id: taskObj._id.toString()
       };
-    });
+    }));
 
-    console.log('Sending tasks:', JSON.stringify(formattedTasks, null, 2));
     res.status(200).json(formattedTasks);
   } catch (error) {
     console.error('Error fetching tasks:', error);
@@ -215,21 +231,50 @@ export const unassignTask = async (req, res) => {
 
 export const approveTask = async (req, res) => {
   try {
+    // Find and populate the task
     const task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
+
+    // Check admin permission
     if (!req.user.isAdmin) {
       return res.status(403).json({ message: 'Only admins can approve tasks' });
     }
-    task.status = 'completed'; // Set status to completed
-    task.isCompleted = true; // Set isCompleted to true
-    task.approvedBy = req.user.id;
+
+    // Find the assigned user
+    const user = await User.findById(task.assignedTo);
+    if (!user) {
+      return res.status(404).json({ message: 'Assigned user not found' });
+    }
+
+    // Update user's account balance
+    const currentBalance = user.accountBalance || 0;
+    const taskPoints = task.points || 0;
+    user.accountBalance = currentBalance + taskPoints;
+    await user.save();
+
+    // Update task status
+    task.status = 'completed';
+    task.isCompleted = true;
+    task.approvedBy = req.user._id;
     task.approvedAt = new Date();
     await task.save();
-    res.json(task);
+
+    // Return updated task
+    const updatedTask = await Task.findById(task._id).populate('assignedTo', 'name');
+    
+    res.json({
+      task: updatedTask,
+      message: `Task approved and ${taskPoints} points added to ${user.name}'s account`
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error in approveTask:', error);
+    res.status(500).json({ 
+      message: 'Server error while approving task', 
+      error: error.message 
+    });
   }
 };
 

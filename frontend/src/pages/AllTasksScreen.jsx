@@ -1,47 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Select, MenuItem, FormControl } from '@mui/material';
+import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import axios from '../utils/api';
-import TaskCard from '../components/TaskCard'; // Assuming TaskCard is used to display tasks
+import TaskCard from '../components/TaskCard';
 import theme from '../theme';
 import backgroundImage from '../../assets/screen2.png';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { styled } from '@mui/material/styles';
-
-// Styled components for the dark glassy dropdown
-const DarkGlassySelect = styled(Select)(({ theme }) => ({
-  backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  backdropFilter: 'blur(10px)',
-  color: theme.palette.common.white,
-  '&:hover': {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    border: `2px solid ${theme.palette.secondary.main}`,
-  },
-  padding: '5px 15px',
-  borderRadius: '15px',
-}));
-
-const DarkGlassyMenuItem = styled(MenuItem)(({ theme }) => ({
-  backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  color: theme.palette.common.white,
-  '&:hover': {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  '&.Mui-selected': {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    },
-  },
-}));
 
 const AllTasksScreen = () => {
   const [tasks, setTasks] = useState([]);
@@ -59,8 +23,7 @@ const AllTasksScreen = () => {
   const fetchAllTasks = async () => {
     try {
       const response = await axios.get('/tasks', { withCredentials: true });
-      const incompleteTasks = response.data.filter(task => !task.isCompleted); // Filter tasks
-      console.log('Fetched tasks:', incompleteTasks); // Log fetched tasks
+      const incompleteTasks = response.data.filter(task => !task.isCompleted);
       setTasks(incompleteTasks);
     } catch (error) {
       console.error('Error fetching all tasks:', error.response || error);
@@ -82,7 +45,6 @@ const AllTasksScreen = () => {
       setCurrentUser(response.data);
     } catch (error) {
       console.error('Error fetching current user:', error);
-      // Handle the error, maybe redirect to login
     }
   };
 
@@ -100,8 +62,6 @@ const AllTasksScreen = () => {
     return (typeof task.assignedTo === 'string' && task.assignedTo === filter) ||
            (typeof task.assignedTo === 'object' && task.assignedTo._id === filter);
   });
-
-  console.log('Filtered tasks:', filteredTasks); // Log filtered tasks
 
   return (
     <ThemeProvider theme={theme}>
@@ -153,19 +113,16 @@ const AllTasksScreen = () => {
           padding: '2rem',
         }}>
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <DarkGlassySelect
-              value={filter}
-              onChange={handleFilterChange}
-              displayEmpty
-            >
-              <DarkGlassyMenuItem value="All">All Tasks</DarkGlassyMenuItem>
-              <DarkGlassyMenuItem value="Unassigned">Unassigned</DarkGlassyMenuItem>
+            <InputLabel>Filter Tasks</InputLabel>
+            <Select value={filter} onChange={handleFilterChange}>
+              <MenuItem value="All">All Tasks</MenuItem>
+              <MenuItem value="Unassigned">Unassigned</MenuItem>
               {users.map(user => (
-                <DarkGlassyMenuItem key={user._id} value={user._id}>
+                <MenuItem key={user._id} value={user._id}>
                   {user.name}
-                </DarkGlassyMenuItem>
+                </MenuItem>
               ))}
-            </DarkGlassySelect>
+            </Select>
           </FormControl>
           <Box sx={{ position: 'relative', minHeight: '200px' }}>
             {filteredTasks.map((task) => (
@@ -175,15 +132,6 @@ const AllTasksScreen = () => {
                 currentUser={currentUser}
                 refreshTasks={fetchAllTasks}
                 showAssignedTo={true}
-                onEdit={() => {}} // Add an edit handler if needed
-                onDelete={async (taskId) => {
-                  try {
-                    await axios.delete(`/tasks/${taskId}`, { withCredentials: true });
-                    fetchAllTasks();
-                  } catch (error) {
-                    console.error('Error deleting task:', error);
-                  }
-                }}
               />
             ))}
           </Box>

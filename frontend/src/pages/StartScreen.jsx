@@ -37,21 +37,30 @@ const StartScreen = () => {
   // Handle user login form submission
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(null); // Clear any previous errors
+    setError(null);
+
+    if (!email || !password) {
+      setError('Username and password are required');
+      return;
+    }
 
     try {
-      // Make API call to login endpoint
-      const response = await axios.post(
-        '/auth/login',
-        { email, password },
-        { withCredentials: true } // Ensure cookies are sent with request
-      );
+      console.log('Attempting login with:', { username: email.trim() }); // Log the attempt
+      const response = await axios.post('/auth/login', {
+        username: email.trim(),
+        password: password.trim()
+      });
 
-      console.log('Login successful:', response.data);
-      navigate('/dashboard'); // Redirect to dashboard on successful login
+      console.log('Login response:', response.data); // Log the response
+
+      if (response.data && response.data.user) {
+        navigate('/dashboard');
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      setError('Invalid email or password. Please try again.');
+      console.error('Login error details:', error.response?.data); // Log detailed error
+      setError(error.response?.data?.message || 'Invalid credentials');
     }
   };
 

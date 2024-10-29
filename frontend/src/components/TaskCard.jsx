@@ -17,7 +17,8 @@ const TaskCard = ({ task, onEdit, onDelete, isDragging, dragRef, showAssignedUse
     const fetchAssignedUser = async () => {
       if (task.assignedTo && task.assignedTo !== "Unassigned") {
         try {
-          const response = await axios.get(`/users/${task.assignedTo}`, { withCredentials: true });
+          const userId = task.assignedTo._id || task.assignedTo;
+          const response = await axios.get(`/users/${userId}`, { withCredentials: true });
           setAssignedUserName(response.data.name);
         } catch (error) {
           console.error('Error fetching assigned user:', error);
@@ -59,7 +60,8 @@ const TaskCard = ({ task, onEdit, onDelete, isDragging, dragRef, showAssignedUse
 
   const handleApprove = async () => {
     try {
-      await axios.put(`/tasks/${task._id}/approve`, {}, { withCredentials: true });
+      const response = await axios.put(`/tasks/${task._id}/approve`, {}, { withCredentials: true });
+      console.log('Task approved:', response.data);
       refreshTasks();
     } catch (error) {
       console.error('Error approving task:', error);
