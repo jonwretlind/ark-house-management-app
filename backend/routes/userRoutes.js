@@ -115,12 +115,15 @@ router.post('/avatar', authenticateUser, upload.single('avatar'), async (req, re
     }
 
     const user = await User.findById(req.user._id);
-    const avatarUrl = `/api/uploads/avatars/${req.file.filename}`;
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
     user.avatarUrl = avatarUrl;
     await user.save();
 
+    console.log('Saved avatar URL:', avatarUrl);
+
     res.json({ avatarUrl });
   } catch (error) {
+    console.error('Avatar upload error:', error);
     res.status(500).json({ message: 'Error uploading avatar', error: error.message });
   }
 });

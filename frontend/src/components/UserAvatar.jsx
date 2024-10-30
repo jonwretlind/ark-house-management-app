@@ -5,23 +5,27 @@ import { BASE_URL } from '../utils/api';
 
 const UserAvatar = ({ user, size = 40, sx = {} }) => {
   const formatAvatarUrl = (url) => {
-    if (!url) return '';
-    // Extract just the filename part after 'avatars/'
-    const match = url.match(/avatars\/[^/]+$/);
-    return match ? `avatars/${match[0].split('/').pop()}` : '';
+    if (!url) return null;
+    // Remove any leading slashes
+    return url.replace(/^\//, '');
   };
   
+  console.log('User in UserAvatar:', user);
+  console.log('Avatar URL before format:', user?.avatarUrl);
+  const formattedUrl = user?.avatarUrl ? `${BASE_URL}/${formatAvatarUrl(user.avatarUrl)}` : null;
+  console.log('Final Avatar URL:', formattedUrl);
+
   return (
     <Avatar
-      alt={user.name}
-      src={user.avatarUrl ? `${BASE_URL}/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
+      alt={user?.name || ''}
+      src={formattedUrl}
       sx={{
         width: size,
         height: size,
         ...sx
       }}
     >
-      {user.name ? user.name.charAt(0).toUpperCase() : ''}
+      {user?.name ? user.name.charAt(0).toUpperCase() : ''}
     </Avatar>
   );
 };
