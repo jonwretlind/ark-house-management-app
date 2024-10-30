@@ -40,8 +40,7 @@ const userSchema = new mongoose.Schema({
   },
   avatarUrl: {
     type: String,
-    default: null,
-    get: (url) => url || null  // Simple getter that just returns the URL as stored
+    default: ''
   },
   birthday: {
     type: Date,
@@ -51,9 +50,6 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   }
-}, {
-  toJSON: { getters: true },  // Enable getters when converting to JSON
-  toObject: { getters: true }  // Enable getters when converting to object
 });
 
 // Password hashing pre-save hook

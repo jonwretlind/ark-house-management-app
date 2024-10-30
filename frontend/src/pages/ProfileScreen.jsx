@@ -53,12 +53,9 @@ const ProfileScreen = () => {
       if (userData.birthday) {
         userData.birthday = new Date(userData.birthday).toISOString().split('T')[0];
       }
-      if (userData.avatarUrl) {
-        userData.avatarUrl = userData.avatarUrl.replace(/\/uploads\/uploads\//, '/uploads/');
-      }
-      console.log('Fetched user data:', userData);
       setUser(userData);
       setEditedUser(userData);
+      console.log('Fetched user data:', userData);
     } catch (error) {
       console.error('Error fetching user data:', error);
       navigate('/');
@@ -154,22 +151,12 @@ const ProfileScreen = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      const cleanAvatarUrl = response.data.avatarUrl.replace(/\/uploads\/uploads\//, '/uploads/');
-      
-      const updatedUser = { 
-        ...user, 
-        avatarUrl: cleanAvatarUrl
-      };
-      
+      const updatedUser = { ...user, avatarUrl: response.data.avatarUrl };
       setUser(updatedUser);
       setEditedUser(updatedUser);
       setSuccess('Avatar updated successfully');
-      
-      await fetchUserData();
-      
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
-      console.error('Avatar upload error:', error);
       setError('Error uploading avatar');
       setTimeout(() => setError(''), 3000);
     }

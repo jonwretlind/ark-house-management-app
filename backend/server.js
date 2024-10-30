@@ -10,7 +10,6 @@ import taskRoutes from './routes/taskRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
-import leaderboardRoutes from './routes/leaderboard.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -19,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Create root level uploads directory
-const rootDir = path.join(__dirname, '..');
+const rootDir = path.join(__dirname, '..');  // Go up one level to project root
 const uploadDir = path.join(rootDir, 'uploads', 'avatars');
 
 // Create directories if they don't exist
@@ -73,7 +72,6 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
