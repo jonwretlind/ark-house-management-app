@@ -1,12 +1,25 @@
 import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema({
-  content: { type: String, required: true, maxlength: 250 },
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  isActive: { type: Boolean, default: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  createdAt: { type: Date, default: Date.now },
-  active: { type: Boolean, default: true },
-  viewed: { type: Boolean, default: false },
-});
+  userStatuses: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+    viewedAt: {
+      type: Date,
+      default: null
+    }
+  }]
+}, { timestamps: true });
 
 const Message = mongoose.model('Message', messageSchema);
 

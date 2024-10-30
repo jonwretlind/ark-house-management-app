@@ -174,11 +174,13 @@ const Dashboard = () => {
   const menuItems = [
     { text: 'Leaderboard', onClick: () => { navigate('/leaderboard'); setMenuOpen(false); } },
     { text: 'All Tasks', onClick: () => { navigate('/all-tasks'); setMenuOpen(false); } },
+    { text: 'All Messages', onClick: () => { navigate('/messages'); setMenuOpen(false); } },
     ...(isAdmin ? [
       { text: 'Create Event', onClick: () => { setEventFormOpen(true); setMenuOpen(false); } },
-    { text: 'Create Message', onClick: () => { setMessageFormOpen(true); setMenuOpen(false); } },
       { text: 'Register User', onClick: () => { navigate('/register-user'); setMenuOpen(false); } },
       { text: 'Manage Users', onClick: () => { navigate('/manage-users'); setMenuOpen(false); } },
+      { text: 'Create Message', onClick: () => { setMessageFormOpen(true); setMenuOpen(false); } },
+      { text: 'Manage Messages', onClick: () => { navigate('/manage-messages'); setMenuOpen(false); } },
       { text: 'Completed Tasks', onClick: () => { navigate('/completed-tasks'); setMenuOpen(false); } }
     ] : []),
     { text: 'Logout', onClick: handleLogout },
@@ -235,9 +237,22 @@ const Dashboard = () => {
   };
 
   const handleMessagesClick = async () => {
-    setMessagesDialogOpen(true);
-    setHasUnviewedMessages(false);
-    // The backend will mark the messages as viewed when fetching them
+    try {
+      // Check if there are unviewed messages
+      const response = await axios.get('/messages/unviewed');
+      const hasUnviewed = response.data.hasUnviewed;
+
+      if (hasUnviewed) {
+        // If there are unviewed messages, show the dialog
+        setMessagesDialogOpen(true);
+        setHasUnviewedMessages(false);
+      } else {
+        // If no unviewed messages, navigate to messages screen
+        navigate('/messages');
+      }
+    } catch (error) {
+      console.error('Error checking unviewed messages:', error);
+    }
   };
 
   if (loading) {
@@ -292,12 +307,14 @@ const Dashboard = () => {
               color="inherit"
               aria-label="menu"
               onClick={toggleMenu}
+              sx={{ mr: .25 }}
             >
               <MenuIcon />
             </IconButton>
             <IconButton
               color="inherit"
               onClick={handleEventIconClick}
+              sx={{ ml: 1 }}
             >
               <Badge
                 variant="dot"
@@ -310,6 +327,13 @@ const Dashboard = () => {
             <IconButton
               color="inherit"
               onClick={handleMessagesClick}
+              sx={{ 
+                ml: 1,
+                color: hasUnviewedMessages ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+                '&:hover': {
+                  color: '#fff'
+                }
+              }}
             >
               <Badge
                 variant="dot"

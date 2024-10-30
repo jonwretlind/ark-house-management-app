@@ -10,6 +10,8 @@ import ManageUsersScreen from './pages/ManageUsersScreen';
 import LeaderboardScreen from './pages/LeaderboardScreen';
 import CompletedTasksScreen from './pages/CompletedTasksScreen';
 import AllTasksScreen from './pages/AllTasksScreen';
+import ManageMessages from './pages/ManageMessages';
+import MessagesScreen from './pages/MessagesScreen';
 
 const App = () => {
   return (
@@ -24,6 +26,8 @@ const App = () => {
         <Route path="/leaderboard" element={<LeaderboardScreen />} />
         <Route path="/completed-tasks" element={<CompletedTasksScreen />} />
         <Route path="/all-tasks" element={<AllTasksScreen />} />
+        <Route path="/manage-messages" element={<ManageMessages />} />
+        <Route path="/messages" element={<MessagesScreen />} />
       </Routes>
     </>
   );

@@ -9,29 +9,32 @@ import {
   AppBar,
   Toolbar,
   IconButton,
-  Avatar,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import axios from '../utils/api';
 import theme from '../theme';
 import backgroundImage from '../../assets/screen2.png';
 
-const LeaderboardScreen = () => {
-  const [users, setUsers] = useState([]);
+const MessagesScreen = () => {
+  const [messages, setMessages] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const response = await axios.get('/users/leaderboard');
-        setUsers(response.data);
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-      }
-    };
-
-    fetchLeaderboard();
+    fetchMessages();
   }, []);
+
+  const fetchMessages = async () => {
+    try {
+      const response = await axios.get('/messages');
+      // Sort messages by date, newest first
+      const sortedMessages = response.data.sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      setMessages(sortedMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -69,15 +72,15 @@ const LeaderboardScreen = () => {
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h6" sx={{ flexGrow: 1, color: 'white' }}>
-              Leaderboard
+              Messages
             </Typography>
           </Toolbar>
         </AppBar>
 
         <Box sx={{ p: 3, flexGrow: 1 }}>
-          {users.map((user, index) => (
+          {messages.map((message) => (
             <Paper 
-              key={user._id} 
+              key={message._id} 
               sx={{
                 p: 3,
                 mb: 2,
@@ -92,34 +95,52 @@ const LeaderboardScreen = () => {
                 },
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar 
-                    alt={user.name} 
-                    src={user.avatarUrl}
-                    sx={{ mr: 2 }}
-                  >
-                    {user.name.charAt(0)}
-                  </Avatar>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box sx={{ flexGrow: 1 }}>
                   <Typography 
-                    variant="h6" 
+                    variant="h5" 
                     sx={{ 
-                      color: '#2c3e50',
-                      fontWeight: 'medium'
+                      fontWeight: 'bold',
+                      color: '#1a4731',
+                      mb: 1
                     }}
                   >
-                    {user.name}
+                    {message.title}
                   </Typography>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      mb: 2,
+                      color: '#2c3e50',
+                      lineHeight: 1.6
+                    }}
+                  >
+                    {message.content}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: '#666',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      Posted: {new Date(message.createdAt).toLocaleDateString()}
+                    </Typography>
+                    {message.isReadByCurrentUser && (
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: '#95a5a6',
+                          fontStyle: 'italic'
+                        }}
+                      >
+                        • Read
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    color: '#d35400',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {user.accountBalance} pts
-                </Typography>
               </Box>
             </Paper>
           ))}
@@ -129,4 +150,4 @@ const LeaderboardScreen = () => {
   );
 };
 
-export default LeaderboardScreen;
+export default MessagesScreen; 

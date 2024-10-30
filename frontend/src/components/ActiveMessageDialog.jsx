@@ -1,42 +1,53 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, IconButton, Box } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { useTheme } from '@mui/material/styles';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Box
+} from '@mui/material';
 
 const ActiveMessageDialog = ({ open, onClose, message }) => {
-  const theme = useTheme();
-
   if (!message) return null;
-
-  const glassyStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '15px',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-  };
 
   return (
     <Dialog 
       open={open} 
-      onClose={onClose} 
-      fullWidth 
+      onClose={onClose}
       maxWidth="sm"
-      PaperProps={{
-        style: glassyStyle
-      }}
+      fullWidth
     >
-      <DialogTitle>Active Message</DialogTitle>
+      {message.title && (
+        <DialogTitle sx={{ 
+          pb: 1,
+          color: '#1a4731',
+          fontWeight: 'bold'
+        }}>
+          {message.title}
+        </DialogTitle>
+      )}
       <DialogContent>
-        <Typography variant="body1">{message.content}</Typography>
-        <Typography variant="caption" sx={{ mt: 2, display: 'block' }}>
-          Posted on: {new Date(message.createdAt).toLocaleString()}
-        </Typography>
+        {message.content && (
+          <Typography variant="body1" sx={{ 
+            mt: 1,
+            color: '#2c3e50',
+            lineHeight: 1.6
+          }}>
+            {message.content}
+          </Typography>
+        )}
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <Typography variant="caption" color="text.secondary">
+            Posted: {new Date(message.createdAt).toLocaleDateString()}
+          </Typography>
+        </Box>
       </DialogContent>
       <DialogActions>
-        <IconButton onClick={onClose} sx={{ color: theme.palette.secondary.main }}>
-          <CloseIcon />
-        </IconButton>
+        <Button onClick={onClose} color="primary">
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );
