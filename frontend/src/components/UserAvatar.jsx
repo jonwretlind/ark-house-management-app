@@ -1,20 +1,28 @@
 // src/components/UserAvatar.jsx
 import React from 'react';
-import { Avatar, Box, Typography } from '@mui/material';
+import { Avatar } from '@mui/material';
+import { BASE_URL } from '../utils/api';
 
-const UserAvatar = ({ user }) => {
+const UserAvatar = ({ user, size = 40, sx = {} }) => {
+  const formatAvatarUrl = (url) => {
+    if (!url) return '';
+    // Extract just the filename part after 'avatars/'
+    const match = url.match(/avatars\/[^/]+$/);
+    return match ? `avatars/${match[0].split('/').pop()}` : '';
+  };
+  
   return (
-    <Box display="flex" alignItems="center" mb={3}>
-      <Avatar 
-        src={user.avatar || '/default-avatar.png'} 
-        alt={user.name} 
-        sx={{ width: 56, height: 56 }} 
-      />
-      <Box ml={2}>
-        <Typography variant="h5">{user.name}</Typography>
-        <Typography variant="subtitle1">Points: {user.points || 0}</Typography>
-      </Box>
-    </Box>
+    <Avatar
+      alt={user.name}
+      src={user.avatarUrl ? `${BASE_URL}/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
+      sx={{
+        width: size,
+        height: size,
+        ...sx
+      }}
+    >
+      {user.name ? user.name.charAt(0).toUpperCase() : ''}
+    </Avatar>
   );
 };
 

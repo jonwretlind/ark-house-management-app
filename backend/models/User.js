@@ -37,6 +37,18 @@ const userSchema = new mongoose.Schema({
   lastEventView: {
     type: Date,
     default: null
+  },
+  avatarUrl: {
+    type: String,
+    default: ''
+  },
+  birthday: {
+    type: Date,
+    required: false
+  },
+  lastMessageView: {
+    type: Date,
+    default: null
   }
 });
 

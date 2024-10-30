@@ -24,6 +24,7 @@ import MessageIcon from '@mui/icons-material/Message';
 import { useSwipeable } from 'react-swipeable';
 import ActiveMessageDialog from '../components/ActiveMessageDialog';
 import MessagesDialog from '../components/MessagesDialog';
+import { BASE_URL } from '../utils/api';
 
 const theme = createTheme({
   palette: {
@@ -172,6 +173,7 @@ const Dashboard = () => {
   };
 
   const menuItems = [
+    { text: 'View Profile', onClick: () => { navigate('/profile'); setMenuOpen(false); } },
     { text: 'Leaderboard', onClick: () => { navigate('/leaderboard'); setMenuOpen(false); } },
     { text: 'All Tasks', onClick: () => { navigate('/all-tasks'); setMenuOpen(false); } },
     { text: 'All Messages', onClick: () => { navigate('/messages'); setMenuOpen(false); } },
@@ -264,6 +266,13 @@ const Dashboard = () => {
     return null;
   }
 
+  const formatAvatarUrl = (url) => {
+    if (!url) return '';
+    // Extract just the filename part after 'avatars/'
+    const match = url.match(/avatars\/[^/]+$/);
+    return match ? `avatars/${match[0].split('/').pop()}` : '';
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -295,8 +304,15 @@ const Dashboard = () => {
           <Toolbar>
             <Avatar 
               alt={user.name} 
-              src={user.avatarUrl}
-              sx={{ mr: 2 }}
+              src={user.avatarUrl ? `${BASE_URL}/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
+              sx={{ 
+                mr: 2,
+                cursor: 'pointer',
+                '&:hover': {
+                  opacity: 0.8
+                }
+              }}
+              onClick={() => navigate('/profile')}
             />
             <Typography variant="subtitle1" sx={{ flexGrow: 1, color: theme.palette.text.primary }}>
               {user.name}

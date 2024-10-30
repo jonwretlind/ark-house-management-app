@@ -12,6 +12,7 @@ import CompletedTasksScreen from './pages/CompletedTasksScreen';
 import AllTasksScreen from './pages/AllTasksScreen';
 import ManageMessages from './pages/ManageMessages';
 import MessagesScreen from './pages/MessagesScreen';
+import ProfileScreen from './pages/ProfileScreen';
 
 const App = () => {
   return (
@@ -28,6 +29,7 @@ const App = () => {
         <Route path="/all-tasks" element={<AllTasksScreen />} />
         <Route path="/manage-messages" element={<ManageMessages />} />
         <Route path="/messages" element={<MessagesScreen />} />
+        <Route path="/profile" element={<ProfileScreen />} />
       </Routes>
     </>
   );
