@@ -37,6 +37,9 @@ const MyEventsList = ({ events }) => {
                 {event.name}
               </Typography>
             </Box>
+            <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 2 }}>
+              {event.description}
+            </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>
               Date: {new Date(event.date).toLocaleDateString()}
             </Typography>

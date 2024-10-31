@@ -11,6 +11,7 @@ export const createEvent = async (req, res) => {
       time,
       description,
       createdBy: req.user.id,
+      attendees: [],
     });
     const savedEvent = await newEvent.save();
     res.status(201).json(savedEvent);
@@ -21,7 +22,9 @@ export const createEvent = async (req, res) => {
 
 export const getEvents = async (req, res) => {
   try {
-    const events = await Event.find().sort({ date: 1 });
+    const events = await Event.find()
+      .populate('attendees', '_id')
+      .sort({ date: 1 });
     const user = await User.findById(req.user.id);
     
     const hasNewEvents = user.lastEventView 
@@ -76,5 +79,67 @@ export const getMyEvents = async (req, res) => {
   } catch (error) {
     console.error('Error fetching user\'s events:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteEvent = async (req, res) => {
+  try {
+    console.log('Delete request user:', req.user); // Debug log
+    console.log('User admin status:', req.user.isAdmin); // Debug log
+    
+    const event = await Event.findById(req.params.id);
+    
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    if (!req.user.isAdmin) {
+      console.log('Admin check failed in controller'); // Debug log
+      return res.status(403).json({ 
+        message: 'Not authorized',
+        debug: {
+          user: req.user,
+          isAdmin: req.user.isAdmin
+        }
+      });
+    }
+
+    await Event.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const updateEvent = async (req, res) => {
+  try {
+    const { name, location, date, time, description } = req.body;
+    
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const updatedEvent = await Event.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        location,
+        date,
+        time,
+        description
+      },
+      { new: true }
+    );
+
+    res.json(updatedEvent);
+  } catch (error) {
+    console.error('Error updating event:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

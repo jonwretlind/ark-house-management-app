@@ -46,7 +46,13 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents }) => {
           <Box>
             {currentUser && currentUser.isAdmin && (
               <>
-                <IconButton onClick={() => onEdit(event)} size="small">
+                <IconButton 
+                  onClick={() => {
+                    console.log('Edit button clicked', event); // Debug log
+                    onEdit(event);
+                  }} 
+                  size="small"
+                >
                   <EditIcon />
                 </IconButton>
                 <IconButton onClick={() => onDelete(event._id)} size="small">
@@ -74,7 +80,7 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents }) => {
           Location: {event.location}
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)' }}>
-          Attendees: {event.attendees ? event.attendees.length : 0}
+          Attendees: {Array.isArray(event.attendees) ? event.attendees.length : 0}
         </Typography>
       </CardContent>
     </Card>

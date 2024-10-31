@@ -13,11 +13,22 @@ const EventsScreen = () => {
   const [events, setEvents] = useState([]);
   const [openEventForm, setOpenEventForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
   const navigate = useNavigate();
+
+  const debugUserData = async () => {
+    try {
+      const response = await axios.get('/auth/debug-user', { withCredentials: true });
+      console.log('Debug User Data:', response.data);
+    } catch (error) {
+      console.error('Debug Error:', error.response?.data || error);
+    }
+  };
 
   useEffect(() => {
     fetchEvents();
     fetchCurrentUser();
+    debugUserData();
   }, []);
 
   const fetchEvents = async () => {
@@ -48,21 +59,61 @@ const EventsScreen = () => {
     }
   };
 
-  const handleEditEvent = async (eventId, eventData) => {
+  const handleEditEvent = async (event) => {
+    setEditingEvent(event);
+    setOpenEventForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setOpenEventForm(false);
+    setEditingEvent(null);
+  };
+
+  const refreshEvents = async () => {
+    await fetchEvents();
+  };
+
+  const handleSubmit = async (formData) => {
     try {
-      await axios.put(`/events/${eventId}`, eventData, { withCredentials: true });
+      console.log('Submitting form with data:', formData);
+      console.log('Editing event:', editingEvent);
+
+      if (editingEvent) {
+        const response = await axios.put(`/events/${editingEvent._id}`, formData, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('Edit response:', response.data);
+      } else {
+        await axios.post('/events', formData, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+      
+      setOpenEventForm(false);
+      setEditingEvent(null);
       fetchEvents();
     } catch (error) {
-      console.error('Error editing event:', error);
+      console.error('Error saving event:', error.response?.data || error);
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
     try {
-      await axios.delete(`/events/${eventId}`, { withCredentials: true });
+      await axios.delete(`/events/${eventId}`, { 
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       fetchEvents();
     } catch (error) {
-      console.error('Error deleting event:', error);
+      console.error('Error deleting event:', error.response?.data || error);
     }
   };
 
@@ -144,8 +195,9 @@ const EventsScreen = () => {
 
         <EventForm
           open={openEventForm}
-          handleClose={() => setOpenEventForm(false)}
-          handleSubmit={handleCreateEvent}
+          handleClose={handleCloseForm}
+          handleSubmit={handleSubmit}
+          initialData={editingEvent}
         />
       </Box>
     </ThemeProvider>

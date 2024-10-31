@@ -17,31 +17,44 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        // Find user by email (frontend sends username but it's actually email)
+        // Find user by email
         const user = await User.findOne({ email: username });
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Check password against passwordHash
+        // Check password
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Create token
+        // Create token with ALL user data needed for authentication
+        const tokenPayload = {
+            id: user._id,
+            email: user.email,
+            isAdmin: user.isAdmin,  // Critical for admin checks
+            name: user.name
+        };
+
+        console.log('Creating token with payload:', tokenPayload); // Debug log
+
         const token = jwt.sign(
-            { id: user._id },
+            tokenPayload,
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        // Set cookie with correct name
+        // Verify token immediately after creation
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Verified token contains:', decoded); // Debug log
+
+        // Set cookie
         res.cookie('session_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            maxAge: 24 * 60 * 60 * 1000
         });
 
         // Send response
@@ -78,6 +91,20 @@ router.get('/me', authenticateUser, async (req, res) => {
 router.post('/logout', (req, res) => {
     res.clearCookie('session_token');
     res.json({ message: 'Logged out successfully' });
+});
+
+// Add this temporary debug route
+router.get('/debug-user', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({
+      databaseUser: user,
+      requestUser: req.user,
+      token: req.cookies.session_token
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;

@@ -61,7 +61,7 @@ export const register = async (req, res) => {
 
 // Login Function
 export const login = async (req, res) => {
-  const JWT_SECRET = process.env.JWT_SECRET; // Ensure this is loaded correctly
+  const JWT_SECRET = process.env.JWT_SECRET;
 
   const { email, password } = req.body;
 
@@ -77,24 +77,47 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid password' });
     }
 
+    // Debug logs
+    console.log('User found:', {
+      id: user._id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      name: user.name
+    });
+
+    // Create token payload
+    const tokenPayload = {
+      id: user._id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      name: user.name
+    };
+
+    console.log('Token payload:', tokenPayload); // Debug log
+
     // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id, email: user.email, isAdmin: user.isAdmin },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
+
+    // Debug: Verify the token immediately after creation
+    const decodedToken = jwt.verify(token, JWT_SECRET);
+    console.log('Verified token after creation:', decodedToken);
 
     // Set the session cookie
     res.cookie('session_token', token, {
       httpOnly: true,
-      maxAge: 3600000, // 1 hour
+      maxAge: 86400000, // 24 hours
       sameSite: 'Strict',
     });
 
     // Send the response
     res.status(200).json({
       message: 'Login successful',
-      user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin },
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        isAdmin: user.isAdmin 
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -104,7 +127,12 @@ export const login = async (req, res) => {
 
 // Logout Function
 export const logout = (req, res) => {
-  res.clearCookie('session_token');
+  res.cookie('session_token', '', {
+    httpOnly: true,
+    expires: new Date(0),
+    sameSite: 'Strict',
+    path: '/'
+  });
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
