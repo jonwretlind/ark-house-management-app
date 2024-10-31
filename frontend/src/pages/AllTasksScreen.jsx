@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import axios from '../utils/api';
 import TaskCard from '../components/TaskCard';
 import theme from '../theme';
@@ -59,9 +59,15 @@ const AllTasksScreen = () => {
              task.assignedTo === "Unassigned" || 
              (typeof task.assignedTo === 'object' && task.assignedTo.name === "Unassigned");
     }
-    return (typeof task.assignedTo === 'string' && task.assignedTo === filter) ||
-           (typeof task.assignedTo === 'object' && task.assignedTo._id === filter);
+    return (typeof task.assignedTo === 'object' && task.assignedTo._id === filter);
   });
+
+  const getSelectedUserName = () => {
+    if (filter === 'All') return 'Filter Tasks';
+    if (filter === 'Unassigned') return 'Unassigned';
+    const selectedUser = users.find(user => user._id === filter);
+    return selectedUser ? selectedUser.name : 'Filter Tasks';
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -112,9 +118,59 @@ const AllTasksScreen = () => {
           mb: 4,
           padding: '2rem',
         }}>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Filter Tasks</InputLabel>
-            <Select value={filter} onChange={handleFilterChange}>
+          <FormControl 
+            fullWidth 
+            sx={{ 
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                color: 'white',
+                backgroundColor: '#1a4731',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.18)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#d35400',
+                },
+              },
+              '& .MuiSelect-icon': {
+                color: 'rgba(255, 255, 255, 0.7)',
+              },
+            }}
+          >
+            <Select
+              value={filter}
+              onChange={handleFilterChange}
+              displayEmpty
+              renderValue={getSelectedUserName}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: 'rgba(52, 73, 94, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '15px',
+                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                    '& .MuiMenuItem-root': {
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                        }
+                      }
+                    }
+                  }
+                }
+              }}
+            >
               <MenuItem value="All">All Tasks</MenuItem>
               <MenuItem value="Unassigned">Unassigned</MenuItem>
               {users.map(user => (
