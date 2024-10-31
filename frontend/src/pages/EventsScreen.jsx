@@ -13,7 +13,6 @@ const EventsScreen = () => {
   const [events, setEvents] = useState([]);
   const [openEventForm, setOpenEventForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [editingEvent, setEditingEvent] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,35 +50,10 @@ const EventsScreen = () => {
 
   const handleEditEvent = async (eventId, eventData) => {
     try {
-      if (!eventId || typeof eventId !== 'string') {
-        console.error('Invalid event ID:', eventId);
-        return;
-      }
-      
-      const eventToEdit = events.find(e => e._id === eventId);
-      setEditingEvent(eventToEdit);
-      setOpenEventForm(true);
-      
-    } catch (error) {
-      console.error('Error editing event:', error);
-    }
-  };
-
-  const handleSubmit = async (eventData) => {
-    try {
-      if (editingEvent) {
-        await axios.put(`/events/${editingEvent._id}`, eventData, { 
-          withCredentials: true 
-        });
-      } else {
-        await axios.post('/events', eventData, { withCredentials: true });
-      }
-      
-      setOpenEventForm(false);
-      setEditingEvent(null);
+      await axios.put(`/events/${eventId}`, eventData, { withCredentials: true });
       fetchEvents();
     } catch (error) {
-      console.error('Error saving event:', error);
+      console.error('Error editing event:', error);
     }
   };
 
@@ -170,12 +144,8 @@ const EventsScreen = () => {
 
         <EventForm
           open={openEventForm}
-          handleClose={() => {
-            setOpenEventForm(false);
-            setEditingEvent(null);
-          }}
-          handleSubmit={handleSubmit}
-          initialData={editingEvent}
+          handleClose={() => setOpenEventForm(false)}
+          handleSubmit={handleCreateEvent}
         />
       </Box>
     </ThemeProvider>

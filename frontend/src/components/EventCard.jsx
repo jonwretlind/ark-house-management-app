@@ -6,7 +6,7 @@ import EventIcon from '@mui/icons-material/Event';
 import axios from '../utils/api';
 import { useTheme } from '@mui/material/styles';
 
-const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents, isDashboard }) => {
+const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents }) => {
   const [isRSVPed, setIsRSVPed] = useState(event.attendees && Array.isArray(event.attendees) && currentUser && event.attendees.includes(currentUser._id));
   const theme = useTheme();
 
@@ -28,17 +28,7 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents, isDash
   };
 
   return (
-    <Card sx={{ 
-      mb: 2, 
-      backgroundColor: 'rgba(255, 255, 255, 0.7)', 
-      backdropFilter: 'blur(10px)',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-      ...(isDashboard && {
-        '& .MuiCardContent-root': {
-          padding: '16px'
-        }
-      })
-    }}>
+    <Card sx={{ mb: 2, backgroundColor: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)' }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography 
@@ -47,7 +37,7 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents, isDash
             sx={{ 
               color: theme.palette.primary.main, 
               fontWeight: 'bold', 
-              fontSize: isDashboard ? '1rem' : '1.2rem', 
+              fontSize: '1.2rem', 
               letterSpacing: '-.25px'
             }}
           >
@@ -56,7 +46,7 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents, isDash
           <Box>
             {currentUser && currentUser.isAdmin && (
               <>
-                <IconButton onClick={() => onEdit(event._id, event)} size="small">
+                <IconButton onClick={() => onEdit(event)} size="small">
                   <EditIcon />
                 </IconButton>
                 <IconButton onClick={() => onDelete(event._id)} size="small">
@@ -71,20 +61,7 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents, isDash
             )}
           </Box>
         </Box>
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            color: 'rgba(0, 0, 0, 0.7)', 
-            mb: 1,
-            ...(isDashboard && {
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            })
-          }}
-        >
+        <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 1 }}>
           {event.description}
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>

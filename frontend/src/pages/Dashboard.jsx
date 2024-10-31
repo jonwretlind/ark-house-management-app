@@ -417,7 +417,9 @@ const Dashboard = () => {
 
           {/* Only render MyEventsList if there are events */}
           {myEvents.length > 0 && (
-            <MyEventsList events={myEvents} />
+            <Box sx={glassyBoxStyle}>
+              <MyEventsList events={myEvents} />
+            </Box>
           )}
         </Container>
 
