@@ -1,0 +1,27 @@
+
+> sober-living-backend@1.0.0 start
+> node server.js
+
+MongoDB connected
+Server running on port 5000
+
+> ark-house-management-app@0.1.0 start
+> vite --host
+
+
+  VITE v5.4.10  ready in 434 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.0.4:5173/
+
+> sober-living-backend@1.0.0 start
+> node server.js
+
+MongoDB connected
+Server running on port 5000
+
+> sober-living-backend@1.0.0 start
+> node server.js
+
+MongoDB connected
+Server running on port 5000

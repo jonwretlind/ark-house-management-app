@@ -1,0 +1,5 @@
+db.getCollectionNames()
+use soberliving
+show dbs;
+;
+db.getCollectionNames()

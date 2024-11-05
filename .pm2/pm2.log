@@ -1,0 +1,88 @@
+2024-11-04T22:32:32: PM2 log: ===============================================================================
+2024-11-04T22:32:32: PM2 log: --- New PM2 Daemon started ----------------------------------------------------
+2024-11-04T22:32:32: PM2 log: Time                 : Mon Nov 04 2024 22:32:32 GMT+0000 (Coordinated Universal Time)
+2024-11-04T22:32:32: PM2 log: PM2 version          : 5.4.2
+2024-11-04T22:32:32: PM2 log: Node.js version      : 18.19.1
+2024-11-04T22:32:32: PM2 log: Current arch         : x64
+2024-11-04T22:32:32: PM2 log: PM2 home             : /home/jonwretlind/.pm2
+2024-11-04T22:32:32: PM2 log: PM2 PID file         : /home/jonwretlind/.pm2/pm2.pid
+2024-11-04T22:32:32: PM2 log: RPC socket file      : /home/jonwretlind/.pm2/rpc.sock
+2024-11-04T22:32:32: PM2 log: BUS socket file      : /home/jonwretlind/.pm2/pub.sock
+2024-11-04T22:32:32: PM2 log: Application log path : /home/jonwretlind/.pm2/logs
+2024-11-04T22:32:32: PM2 log: Worker Interval      : 30000
+2024-11-04T22:32:32: PM2 log: Process dump file    : /home/jonwretlind/.pm2/dump.pm2
+2024-11-04T22:32:32: PM2 log: Concurrent actions   : 2
+2024-11-04T22:32:32: PM2 log: SIGTERM timeout      : 1600
+2024-11-04T22:32:32: PM2 log: ===============================================================================
+2024-11-04T22:32:32: PM2 log: App [npm start:0] starting in -fork mode-
+2024-11-04T22:32:32: PM2 log: App [npm start:0] online
+2024-11-05T17:04:33: PM2 log: Stopping app:npm start id:0
+2024-11-05T17:04:33: PM2 log: App [npm start:0] exited with code [0] via signal [SIGINT]
+2024-11-05T17:04:33: PM2 log: pid=7317 msg=process killed
+2024-11-05T17:04:33: PM2 log: PM2 successfully stopped
+2024-11-05T17:04:48: PM2 log: ===============================================================================
+2024-11-05T17:04:48: PM2 log: --- New PM2 Daemon started ----------------------------------------------------
+2024-11-05T17:04:48: PM2 log: Time                 : Tue Nov 05 2024 17:04:48 GMT+0000 (Coordinated Universal Time)
+2024-11-05T17:04:48: PM2 log: PM2 version          : 5.4.2
+2024-11-05T17:04:48: PM2 log: Node.js version      : 18.19.1
+2024-11-05T17:04:48: PM2 log: Current arch         : x64
+2024-11-05T17:04:48: PM2 log: PM2 home             : /home/jonwretlind/.pm2
+2024-11-05T17:04:48: PM2 log: PM2 PID file         : /home/jonwretlind/.pm2/pm2.pid
+2024-11-05T17:04:48: PM2 log: RPC socket file      : /home/jonwretlind/.pm2/rpc.sock
+2024-11-05T17:04:48: PM2 log: BUS socket file      : /home/jonwretlind/.pm2/pub.sock
+2024-11-05T17:04:48: PM2 log: Application log path : /home/jonwretlind/.pm2/logs
+2024-11-05T17:04:48: PM2 log: Worker Interval      : 30000
+2024-11-05T17:04:48: PM2 log: Process dump file    : /home/jonwretlind/.pm2/dump.pm2
+2024-11-05T17:04:48: PM2 log: Concurrent actions   : 2
+2024-11-05T17:04:48: PM2 log: SIGTERM timeout      : 1600
+2024-11-05T17:04:48: PM2 log: ===============================================================================
+2024-11-05T17:04:48: PM2 log: App [npm start:0] starting in -fork mode-
+2024-11-05T17:04:48: PM2 log: App [npm start:0] online
+2024-11-05T17:15:38: PM2 log: Stopping app:npm start id:0
+2024-11-05T17:15:38: PM2 log: App [npm start:0] exited with code [0] via signal [SIGINT]
+2024-11-05T17:15:38: PM2 log: pid=14577 msg=process killed
+2024-11-05T17:15:38: PM2 log: PM2 successfully stopped
+2024-11-05T17:15:49: PM2 log: ===============================================================================
+2024-11-05T17:15:49: PM2 log: --- New PM2 Daemon started ----------------------------------------------------
+2024-11-05T17:15:49: PM2 log: Time                 : Tue Nov 05 2024 17:15:49 GMT+0000 (Coordinated Universal Time)
+2024-11-05T17:15:49: PM2 log: PM2 version          : 5.4.2
+2024-11-05T17:15:49: PM2 log: Node.js version      : 18.19.1
+2024-11-05T17:15:49: PM2 log: Current arch         : x64
+2024-11-05T17:15:49: PM2 log: PM2 home             : /home/jonwretlind/.pm2
+2024-11-05T17:15:49: PM2 log: PM2 PID file         : /home/jonwretlind/.pm2/pm2.pid
+2024-11-05T17:15:49: PM2 log: RPC socket file      : /home/jonwretlind/.pm2/rpc.sock
+2024-11-05T17:15:49: PM2 log: BUS socket file      : /home/jonwretlind/.pm2/pub.sock
+2024-11-05T17:15:49: PM2 log: Application log path : /home/jonwretlind/.pm2/logs
+2024-11-05T17:15:49: PM2 log: Worker Interval      : 30000
+2024-11-05T17:15:49: PM2 log: Process dump file    : /home/jonwretlind/.pm2/dump.pm2
+2024-11-05T17:15:49: PM2 log: Concurrent actions   : 2
+2024-11-05T17:15:49: PM2 log: SIGTERM timeout      : 1600
+2024-11-05T17:15:49: PM2 log: ===============================================================================
+2024-11-05T17:15:49: PM2 log: App [npm start:0] starting in -fork mode-
+2024-11-05T17:15:49: PM2 log: App [npm start:0] online
+2024-11-05T17:48:44: PM2 log: Stopping app:npm start id:0
+2024-11-05T17:48:44: PM2 log: App [npm start:0] exited with code [0] via signal [SIGINT]
+2024-11-05T17:48:44: PM2 log: pid=14938 msg=process killed
+2024-11-05T17:48:45: PM2 log: PM2 successfully stopped
+2024-11-05T17:49:02: PM2 log: ===============================================================================
+2024-11-05T17:49:02: PM2 log: --- New PM2 Daemon started ----------------------------------------------------
+2024-11-05T17:49:02: PM2 log: Time                 : Tue Nov 05 2024 17:49:02 GMT+0000 (Coordinated Universal Time)
+2024-11-05T17:49:02: PM2 log: PM2 version          : 5.4.2
+2024-11-05T17:49:02: PM2 log: Node.js version      : 18.19.1
+2024-11-05T17:49:02: PM2 log: Current arch         : x64
+2024-11-05T17:49:02: PM2 log: PM2 home             : /home/jonwretlind/.pm2
+2024-11-05T17:49:02: PM2 log: PM2 PID file         : /home/jonwretlind/.pm2/pm2.pid
+2024-11-05T17:49:02: PM2 log: RPC socket file      : /home/jonwretlind/.pm2/rpc.sock
+2024-11-05T17:49:02: PM2 log: BUS socket file      : /home/jonwretlind/.pm2/pub.sock
+2024-11-05T17:49:02: PM2 log: Application log path : /home/jonwretlind/.pm2/logs
+2024-11-05T17:49:02: PM2 log: Worker Interval      : 30000
+2024-11-05T17:49:02: PM2 log: Process dump file    : /home/jonwretlind/.pm2/dump.pm2
+2024-11-05T17:49:02: PM2 log: Concurrent actions   : 2
+2024-11-05T17:49:02: PM2 log: SIGTERM timeout      : 1600
+2024-11-05T17:49:02: PM2 log: ===============================================================================
+2024-11-05T17:49:02: PM2 log: App [npm start:0] starting in -fork mode-
+2024-11-05T17:49:02: PM2 log: App [npm start:0] online
+2024-11-05T18:00:42: PM2 log: Stopping app:npm start id:0
+2024-11-05T18:00:42: PM2 log: App [npm start:0] exited with code [0] via signal [SIGINT]
+2024-11-05T18:00:42: PM2 log: pid=15712 msg=process killed
+2024-11-05T18:00:42: PM2 log: PM2 successfully stopped

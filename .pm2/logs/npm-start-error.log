@@ -1,0 +1,30 @@
+/home/jonwretlind/backend/node_modules/mongoose/lib/connection.js:856
+    throw new MongooseError('Connection.prototype.close() no longer accepts a callback');
+          ^
+
+MongooseError: Connection.prototype.close() no longer accepts a callback
+    at NativeConnection.close (/home/jonwretlind/backend/node_modules/mongoose/lib/connection.js:856:11)
+    at process.<anonymous> (file:///home/jonwretlind/backend/server.js:95:23)
+    at process.emit (node:events:517:28)
+
+Node.js v18.19.1
+/home/jonwretlind/backend/node_modules/mongoose/lib/connection.js:856
+    throw new MongooseError('Connection.prototype.close() no longer accepts a callback');
+          ^
+
+MongooseError: Connection.prototype.close() no longer accepts a callback
+    at NativeConnection.close (/home/jonwretlind/backend/node_modules/mongoose/lib/connection.js:856:11)
+    at process.<anonymous> (file:///home/jonwretlind/backend/server.js:95:23)
+    at process.emit (node:events:517:28)
+
+Node.js v18.19.1
+/home/jonwretlind/backend/node_modules/mongoose/lib/connection.js:856
+    throw new MongooseError('Connection.prototype.close() no longer accepts a callback');
+          ^
+
+MongooseError: Connection.prototype.close() no longer accepts a callback
+    at NativeConnection.close (/home/jonwretlind/backend/node_modules/mongoose/lib/connection.js:856:11)
+    at process.<anonymous> (file:///home/jonwretlind/backend/server.js:95:23)
+    at process.emit (node:events:517:28)
+
+Node.js v18.19.1
