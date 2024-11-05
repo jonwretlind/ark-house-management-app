@@ -1,11 +1,13 @@
 // src/utils/api.js
 import axios from 'axios';
 
-// Remove /api from the BASE_URL
-export const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
+// Import the HOST variable from the environment
+const HOST = import.meta.env.VITE_HOST || 'http://localhost:5000';
+
+export const BASE_URL = `${HOST}/api`; // Export BASE_URL
 
 const api = axios.create({
-    baseURL: `${BASE_URL}/api`, // Add /api here for API requests only
+    baseURL: BASE_URL, // Use the HOST variable for API requests
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'

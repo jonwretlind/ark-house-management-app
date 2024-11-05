@@ -1,7 +1,7 @@
 // src/components/UserAvatar.jsx
 import React from 'react';
 import { Avatar } from '@mui/material';
-import { BASE_URL } from '../utils/api';
+import api from '../utils/api'; // Import the default export
 
 const UserAvatar = ({ user, size = 40, sx = {} }) => {
   const formatAvatarUrl = (url) => {
@@ -14,7 +14,7 @@ const UserAvatar = ({ user, size = 40, sx = {} }) => {
   return (
     <Avatar
       alt={user.name}
-      src={user.avatarUrl ? `${BASE_URL}/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
+      src={user.avatarUrl ? `${api.BASE_URL}/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
       sx={{
         width: size,
         height: size,

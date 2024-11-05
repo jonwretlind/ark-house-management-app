@@ -1,0 +1,209 @@
+[{
+  "_id": {
+    "$oid": "6711af8c3a76cb5bc3cfcf19"
+  },
+  "name": "Clean Toilets",
+  "description": "Clean all of the toilets in the upstairs and downstairs bathrooms",
+  "dueDate": {
+    "$date": "2024-11-02T00:00:00.000Z"
+  },
+  "isCompleted": false,
+  "isVerified": false,
+  "points": 1000,
+  "priority": 1,
+  "assignedTo": "67105c9bbd16c4b7fa79bbfe",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "__v": 0,
+  "icon": "/assets/icons/icons8-cleaning-a-surface-100.png",
+  "completedAt": {
+    "$date": "2024-10-24T22:07:28.347Z"
+  },
+  "status": "active",
+  "approvedAt": {
+    "$date": "2024-10-24T22:07:35.984Z"
+  },
+  "approvedBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  }
+},
+{
+  "_id": {
+    "$oid": "67180cf8b737e3731908c763"
+  },
+  "name": "Organize Supplies",
+  "description": "Organize the groceries and supplies in the basement pantry",
+  "dueDate": {
+    "$date": "2024-12-13T00:00:00.000Z"
+  },
+  "isCompleted": false,
+  "isVerified": false,
+  "points": 200,
+  "priority": 3,
+  "assignedTo": "6710511ec569b8255833b72c",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "icon": "/assets/icons/icons8-hand-100.png",
+  "__v": 0,
+  "completedAt": {
+    "$date": "2024-10-30T22:41:22.536Z"
+  },
+  "status": "pending_approval",
+  "approvedAt": {
+    "$date": "2024-10-29T19:38:31.402Z"
+  },
+  "approvedBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "updatedAt": {
+    "$date": "2024-10-30T22:41:22.542Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67181b35d335416a1706c791"
+  },
+  "name": "Mop Floors",
+  "description": "Mop the kitchen floors and the common dining area, entances.",
+  "dueDate": {
+    "$date": "2024-11-08T00:00:00.000Z"
+  },
+  "isCompleted": false,
+  "isVerified": false,
+  "points": 100,
+  "priority": 1,
+  "assignedTo": "67105c9bbd16c4b7fa79bbfe",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "icon": "/assets/icons/icons8-mop-100.png",
+  "__v": 0,
+  "completedAt": {
+    "$date": "2024-10-31T19:20:05.917Z"
+  },
+  "status": "pending_approval",
+  "updatedAt": {
+    "$date": "2024-10-31T19:20:05.970Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67181ddcd335416a1706c7b7"
+  },
+  "name": "Rake Leaves",
+  "description": "Rake up the leaves in the lawn",
+  "dueDate": {
+    "$date": "2024-11-22T00:00:00.000Z"
+  },
+  "isCompleted": true,
+  "isVerified": false,
+  "points": 100,
+  "priority": 1,
+  "assignedTo": "6710511ec569b8255833b72c",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "icon": "/assets/icons/icons8-rake-100.png",
+  "__v": 0,
+  "status": "completed",
+  "completedAt": {
+    "$date": "2024-10-31T16:53:05.144Z"
+  },
+  "approvedAt": {
+    "$date": "2024-10-31T16:53:09.853Z"
+  },
+  "approvedBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "updatedAt": {
+    "$date": "2024-10-31T16:53:09.855Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "671990da8ae9f1f4c7b2c79a"
+  },
+  "name": "Organize Socks",
+  "description": "Organize the new donated socks in the basement",
+  "dueDate": {
+    "$date": "2024-11-28T00:00:00.000Z"
+  },
+  "isCompleted": false,
+  "isVerified": false,
+  "points": 300,
+  "priority": 1,
+  "assignedTo": "6719907a8ae9f1f4c7b2c771",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "icon": "/assets/icons/icons8-hand-100.png",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "671a78f2dfa4bb8a574ed5e0"
+  },
+  "name": "Organize the clothes closet",
+  "description": "Downstairs please set aside the unused and inappropriate clothing donations and organize the clothes",
+  "dueDate": {
+    "$date": "2024-11-09T00:00:00.000Z"
+  },
+  "status": "active",
+  "isCompleted": false,
+  "isVerified": false,
+  "points": 1000,
+  "priority": 1,
+  "assignedTo": "6710511ec569b8255833b72c",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "icon": "/assets/icons/icons8-washing-machine-100.png",
+  "__v": 0,
+  "completedAt": {
+    "$date": "2024-10-29T19:35:11.256Z"
+  },
+  "approvedAt": {
+    "$date": "2024-10-29T19:35:13.889Z"
+  },
+  "approvedBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "updatedAt": {
+    "$date": "2024-10-30T22:40:48.018Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "671a7962dfa4bb8a574ed5f0"
+  },
+  "name": "Clean room",
+  "description": "Get it shipshape, soldier!!!!!",
+  "dueDate": {
+    "$date": "2024-10-26T00:00:00.000Z"
+  },
+  "status": "active",
+  "isCompleted": false,
+  "isVerified": false,
+  "points": 10,
+  "priority": 1,
+  "assignedTo": "67105c9bbd16c4b7fa79bbfe",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "icon": "/assets/icons/icons8-broom-100.png",
+  "__v": 0,
+  "completedAt": {
+    "$date": "2024-10-29T19:36:40.057Z"
+  },
+  "approvedAt": {
+    "$date": "2024-10-29T19:36:43.267Z"
+  },
+  "approvedBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "updatedAt": {
+    "$date": "2024-10-31T19:20:09.658Z"
+  }
+}]
