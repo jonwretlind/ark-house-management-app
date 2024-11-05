@@ -1,0 +1,74 @@
+[{
+  "_id": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "name": "Jon Wretlind",
+  "email": "jon@thearksoberliving.org",
+  "phone": "9702187712",
+  "passwordHash": "$2a$10$Jta6MSwyCyic3MfVWr9zceRankBIWT0Mh4izrgEjurYYAUk7Y4qvm",
+  "isAdmin": true,
+  "accountBalance": 6110,
+  "createdAt": {
+    "$date": "2024-10-16T23:49:50.663Z"
+  },
+  "__v": 0,
+  "lastEventView": {
+    "$date": "2024-10-31T20:17:37.327Z"
+  },
+  "avatarUrl": "/uploads/avatars/6710511ec569b8255833b72c-1730313195597.jpg",
+  "birthday": {
+    "$date": {
+      "$numberLong": "-40003200000"
+    }
+  }
+},
+{
+  "_id": {
+    "$oid": "67105c9bbd16c4b7fa79bbfe"
+  },
+  "name": "Joe Bob",
+  "email": "joebob@user.com",
+  "phone": "1234567890",
+  "passwordHash": "$2b$10$5xXWUIjoSJjGzkaLycasUekxBnq0IY91skzgmNQFrYirBBe1jGNH.",
+  "isAdmin": false,
+  "accountBalance": 750,
+  "createdAt": {
+    "$date": "2024-10-17T00:38:51.833Z"
+  },
+  "__v": 0,
+  "lastEventView": {
+    "$date": "2024-10-31T19:20:14.150Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6719907a8ae9f1f4c7b2c771"
+  },
+  "name": "Billy",
+  "email": "billy@billy.com",
+  "phone": "9702135566",
+  "passwordHash": "$2a$10$eGdJjKbxMRehv7xjcHQxcuVjQLAYNiG7uLj/tF5r66QVjsV6vDZhe",
+  "isAdmin": false,
+  "accountBalance": 875,
+  "lastEventView": null,
+  "createdAt": {
+    "$date": "2024-10-24T00:10:34.786Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67212e007ed942207988ce0c"
+  },
+  "name": "Admin User",
+  "email": "admin@example.com",
+  "phone": "1234567890",
+  "passwordHash": "$2a$10$I.F4bZ.YCIUOBIrMfgCXYek2sRNtrxfmdPfjY0ClOsOINNz/6Smda",
+  "isAdmin": true,
+  "accountBalance": 0,
+  "lastEventView": null,
+  "createdAt": {
+    "$date": "2024-10-29T18:48:32.563Z"
+  },
+  "__v": 0
+}]
