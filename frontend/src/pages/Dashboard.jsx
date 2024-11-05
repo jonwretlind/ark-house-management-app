@@ -97,34 +97,66 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userResponse = await axios.get('/auth/me', { withCredentials: true });
+        const userResponse = await axios.get('/auth/me', {
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!userResponse.data || typeof userResponse.data === 'string') {
+          console.error('Invalid user data received:', userResponse);
+          throw new Error('Invalid user data');
+        }
+
         setUser(userResponse.data);
         setIsAdmin(userResponse.data.isAdmin);
         console.log('User data fetched:', userResponse.data);
 
-        // Fetch tasks if the user is authenticated
-        const tasksResponse = await axios.get('/tasks', { withCredentials: true });
-        setTasks(tasksResponse.data);
+        try {
+          const tasksResponse = await axios.get('/tasks', { withCredentials: true });
+          setTasks(tasksResponse.data);
+        } catch (error) {
+          console.error('Error fetching tasks:', error);
+        }
 
-        // Fetch user's RSVPed events
-        const myEventsResponse = await axios.get('/events/my-events', { withCredentials: true });
-        setMyEvents(myEventsResponse.data);
+        try {
+          const myEventsResponse = await axios.get('/events/my-events', { withCredentials: true });
+          setMyEvents(myEventsResponse.data);
+        } catch (error) {
+          console.error('Error fetching events:', error);
+        }
 
-        // Fetch active message
-        const activeMessageResponse = await axios.get('/messages/active', { withCredentials: true });
-        setActiveMessage(activeMessageResponse.data);
+        try {
+          const activeMessageResponse = await axios.get('/messages/active', { withCredentials: true });
+          setActiveMessage(activeMessageResponse.data);
+        } catch (error) {
+          console.error('Error fetching active message:', error);
+        }
 
-        // Fetch the most recent message
-        const recentMessageResponse = await axios.get('/messages/recent', { withCredentials: true });
-        setRecentMessage(recentMessageResponse.data);
+        try {
+          const recentMessageResponse = await axios.get('/messages/recent', { withCredentials: true });
+          setRecentMessage(recentMessageResponse.data);
+        } catch (error) {
+          console.error('Error fetching recent message:', error);
+        }
 
-        // Check for unviewed messages
-        const unviewedResponse = await axios.get('/messages/unviewed', { withCredentials: true });
-        setHasUnviewedMessages(unviewedResponse.data.hasUnviewed);
+        try {
+          const unviewedResponse = await axios.get('/messages/unviewed', { withCredentials: true });
+          setHasUnviewedMessages(unviewedResponse.data.hasUnviewed);
+        } catch (error) {
+          console.error('Error fetching unviewed messages:', error);
+        }
 
         await refreshFeed();
+
       } catch (error) {
-        console.error('Authentication failed, redirecting to login...', error);
+        console.error('Authentication error details:', {
+          message: error.message,
+          response: error.response,
+          status: error.response?.status,
+          data: error.response?.data
+        });
         navigate('/');
       } finally {
         setLoading(false);
@@ -132,7 +164,7 @@ const Dashboard = () => {
     };
 
     fetchUserData();
-  }, []);
+  }, [navigate]);
 
   // Updated logout function
   const handleLogout = async () => {
@@ -257,6 +289,24 @@ const Dashboard = () => {
     }
   };
 
+  useEffect(() => {
+    // Test direct axios call
+    const testConnection = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
+        console.log('Test connection response:', response);
+        const data = await response.json();
+        console.log('Test connection data:', data);
+      } catch (error) {
+        console.error('Test connection error:', error);
+      }
+    };
+
+    testConnection();
+  }, []);
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -270,7 +320,7 @@ const Dashboard = () => {
     if (!url) return '';
     // Extract just the filename part after 'avatars/'
     const match = url.match(/avatars\/[^/]+$/);
-    return match ? `avatars/${match[0].split('/').pop()}` : '';
+    return match ? match[0] : '';
   };
 
   return (
@@ -304,7 +354,7 @@ const Dashboard = () => {
           <Toolbar>
             <Avatar 
               alt={user.name} 
-              src={user.avatarUrl ? `${BASE_URL}/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
+              src={user.avatarUrl ? `/api/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
               sx={{ 
                 mr: 2,
                 cursor: 'pointer',
