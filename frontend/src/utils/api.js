@@ -1,7 +1,8 @@
 // src/utils/api.js
 import axios from 'axios';
 
-export const BASE_URL = '/api';  // Keep the /api prefix
+const isProduction = import.meta.env.PROD;
+export const BASE_URL = isProduction ? import.meta.env.VITE_API_URL : '/api';
 
 const instance = axios.create({
   baseURL: BASE_URL,

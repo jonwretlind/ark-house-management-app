@@ -33,10 +33,15 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://172.179.241.232:5173',  // Add your Azure IP with frontend port
+    'http://172.179.241.232:5000',  // Add your Azure IP with backend port
+    'http://172.179.241.232'        // Add your Azure IP without port
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }));
 
 // Basic middleware
@@ -45,8 +50,12 @@ app.use(cookieParser());
 
 // Serve static files with custom middleware
 app.use('/uploads/avatars', (req, res, next) => {
-  // Set CORS headers
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Origin', [
+    'http://localhost:5173',
+    'http://172.179.241.232:5173',
+    'http://172.179.241.232:5000',
+    'http://172.179.241.232'
+  ].includes(req.headers.origin) ? req.headers.origin : 'http://localhost:5173');
   res.header('Access-Control-Allow-Methods', 'GET');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   res.header('Cross-Origin-Resource-Policy', 'cross-origin');
