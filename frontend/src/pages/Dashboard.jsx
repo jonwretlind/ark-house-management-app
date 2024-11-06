@@ -24,7 +24,6 @@ import MessageIcon from '@mui/icons-material/Message';
 import { useSwipeable } from 'react-swipeable';
 import ActiveMessageDialog from '../components/ActiveMessageDialog';
 import MessagesDialog from '../components/MessagesDialog';
-import { BASE_URL } from '../utils/api';
 
 const theme = createTheme({
   palette: {
