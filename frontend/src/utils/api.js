@@ -17,8 +17,9 @@ const instance = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  // Ensure cookies are sent and received
-  withCredentials: true
+  // Add specific cookie handling
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN'
 });
 
 // Add request interceptor with detailed logging

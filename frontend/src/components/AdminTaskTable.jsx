@@ -52,46 +52,6 @@ const LightTab = styled(Tab)(({ theme }) => ({
   },
 }));
 
-const TaskItem = ({ task, index, moveTask, onEdit, onDelete, tabIndex, currentUser, refreshTasks }) => {
-  const [{ isDragging }, drag] = useDrag({
-    type: 'TASK',
-    item: { id: task._id, index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  const [, drop] = useDrop({
-    accept: 'TASK',
-    hover(item, monitor) {
-      if (!drag) {
-        return;
-      }
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-      moveTask(dragIndex, hoverIndex);
-      item.index = hoverIndex;
-    },
-  });
-
-  return (
-    <div ref={(node) => drag(drop(node))}>
-      <TaskCard
-        task={task}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        isDragging={isDragging}
-        currentUser={currentUser}
-        refreshTasks={refreshTasks}
-        showAssignedTo={tabIndex === 2}
-      />
-    </div>
-  );
-};
-
 const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
   const theme = useTheme();
   const [internalTasks, setInternalTasks] = useState([]);
@@ -108,6 +68,8 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
   });
   const [tabValue, setTabValue] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const filterTasks = useCallback((tasks) => {
     const userTasks = tasks.filter(task => 
@@ -230,12 +192,29 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('/users', { withCredentials: true });
+        console.log('Fetching users with token:', document.cookie);
+        const response = await axios.get('/users', {
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${document.cookie.split('token=')[1]}`
+          }
+        });
+        console.log('Users response:', response.data);
         setUsers(response.data);
+        setError(null);
       } catch (error) {
         console.error('Error fetching users:', error);
+        setError(error.response?.data?.message || 'Error fetching users');
+        // If unauthorized, you might want to handle it specifically
+        if (error.response?.status === 403) {
+          console.log('User not authorized to view users list');
+        }
+      } finally {
+        setLoading(false);
       }
     };
+
     fetchUsers();
   }, []);
 
@@ -393,16 +372,14 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
 
         <Box sx={{ mt: 2 }}>
           {tabsToShow[tabValue] && tabsToShow[tabValue].content.map((task) => (
-            <TaskItem
+            <TaskCard
               key={task._id ? task._id.toString() : task.id}
               task={task}
-              index={task.priority - 1}
-              moveTask={moveTask}
               onEdit={handleEditTask}
               onDelete={handleDeleteTask}
-              tabIndex={tabValue}
               currentUser={currentUser}
               refreshTasks={refreshTasks}
+              showAssignedTo={tabValue === 2}
             />
           ))}
         </Box>
@@ -427,7 +404,23 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
           open={open}
           onClose={() => setOpen(false)}
           onSubmit={handleCreateOrUpdateTask}
-          title={newTask._id ? 'Edit Task' : 'Create New Task'}
+          title="Create New Task"
+          PaperProps={{
+            sx: {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '15px',
+              boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+            }
+          }}
+          DialogTitleProps={{
+            sx: {
+              backgroundColor: 'rgba(26, 71, 49, 0.9)',
+              color: 'white',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
+            }
+          }}
         >
           <TextField name="name" label="Task Name" fullWidth value={newTask.name} onChange={handleChange} sx={{ mt: 2 }} />
           <TextField name="description" label="Description" fullWidth value={newTask.description} onChange={handleChange} sx={{ mt: 2 }} />

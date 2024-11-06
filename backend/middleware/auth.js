@@ -6,21 +6,33 @@ export const authenticateUser = async (req, res, next) => {
         console.log('Auth middleware - cookies:', req.cookies);
         console.log('Auth middleware - headers:', req.headers);
 
-        const token = req.cookies.token;
-        
+        // Try to get token from cookies first, then Authorization header
+        let token = req.cookies.token;
+        if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
         if (!token) {
-            console.log('No token found in cookies');
-            return res.status(401).json({ message: 'No authentication token found' });
+            console.log('No token found');
+            return res.status(401).json({ message: 'Authentication required' });
         }
 
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             console.log('Token decoded:', decoded);
-            req.user = decoded;
+            
+            // Fetch user to verify they still exist and are active
+            const user = await User.findById(decoded.id).select('-password');
+            if (!user) {
+                console.log('User not found in database');
+                return res.status(401).json({ message: 'User not found' });
+            }
+
+            req.user = user;
             next();
         } catch (error) {
             console.log('Token verification failed:', error.message);
-            return res.status(401).json({ message: 'Token verification failed' });
+            return res.status(401).json({ message: 'Invalid authentication token' });
         }
     } catch (error) {
         console.error('Auth middleware error:', error);

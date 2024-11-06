@@ -1,95 +1,66 @@
 // models/User.js
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
-    trim: true,
-  }, 
+    required: true
+  },
   email: {
     type: String,
     required: true,
-    unique: true,
-    trim: true,
-  },
-  phone: {
-    type: String,  // For SMS notifications
-    required: true,
+    unique: true
   },
   passwordHash: {
     type: String,
-    required: true,
+    required: true
   },
   isAdmin: {
     type: Boolean,
-    default: false,  // Default is non-admin user (resident)
+    default: false
   },
+  avatarUrl: String,
   accountBalance: {
     type: Number,
-    default: 0,  // User's accumulated points
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  lastEventView: {
-    type: Date,
-    default: null
-  },
-  avatarUrl: {
-    type: String,
-    default: ''
-  },
-  birthday: {
-    type: Date,
-    required: false
-  },
-  lastMessageView: {
-    type: Date,
-    default: null
+    default: 0
+  }
+}, {
+  timestamps: true
+});
+
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('passwordHash')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 
-// Password hashing pre-save hook
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('passwordHash')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
-  next();
-});
-
-// Compare password method
-userSchema.methods.comparePassword = async function (password) {
-  return bcrypt.compare(password, this.passwordHash);
-};
-
-// Add a static method to create a test admin user
-userSchema.statics.createTestUser = async function() {
+// Method to compare passwords
+userSchema.methods.comparePassword = async function(candidatePassword) {
   try {
-    // Check if test user already exists
-    const existingUser = await this.findOne({ email: 'admin@example.com' });
-    if (existingUser) {
-      console.log('Test user already exists');
-      return existingUser;
+    if (!this.passwordHash) {
+      console.error('No password hash stored for user');
+      return false;
     }
-
-    // Create new test user
-    const testUser = new this({
-      name: 'Admin User',
-      email: 'admin@example.com',
-      phone: '1234567890',
-      passwordHash: 'admin123', // This will be hashed by the pre-save middleware
-      isAdmin: true
+    if (!candidatePassword) {
+      console.error('No candidate password provided');
+      return false;
+    }
+    console.log('Comparing passwords:', {
+      candidatePassword: !!candidatePassword,
+      hashedPassword: !!this.passwordHash
     });
-
-    await testUser.save();
-    console.log('Test user created successfully');
-    return testUser;
+    return await bcrypt.compare(candidatePassword, this.passwordHash);
   } catch (error) {
-    console.error('Error creating test user:', error);
-    throw error;
+    console.error('Password comparison error:', error);
+    return false;
   }
 };
 

@@ -231,20 +231,31 @@ export const unassignTask = async (req, res) => {
 
 export const approveTask = async (req, res) => {
   try {
+    console.log('Starting task approval process for task ID:', req.params.id);
+    
     // Find and populate the task
     const task = await Task.findById(req.params.id);
+    console.log('Found task:', task);
+    
     if (!task) {
+      console.log('Task not found with ID:', req.params.id);
       return res.status(404).json({ message: 'Task not found' });
     }
 
     // Check admin permission
+    console.log('Checking admin permission for user:', req.user);
     if (!req.user.isAdmin) {
+      console.log('User is not admin:', req.user._id);
       return res.status(403).json({ message: 'Only admins can approve tasks' });
     }
 
     // Find the assigned user
+    console.log('Finding assigned user:', task.assignedTo);
     const user = await User.findById(task.assignedTo);
+    console.log('Found assigned user:', user);
+    
     if (!user) {
+      console.log('Assigned user not found:', task.assignedTo);
       return res.status(404).json({ message: 'Assigned user not found' });
     }
 
@@ -252,6 +263,13 @@ export const approveTask = async (req, res) => {
     const currentBalance = user.accountBalance || 0;
     const taskPoints = task.points || 0;
     user.accountBalance = currentBalance + taskPoints;
+    console.log('Updating user balance:', {
+      userId: user._id,
+      oldBalance: currentBalance,
+      pointsAdded: taskPoints,
+      newBalance: user.accountBalance
+    });
+    
     await user.save();
 
     // Update task status
@@ -259,21 +277,43 @@ export const approveTask = async (req, res) => {
     task.isCompleted = true;
     task.approvedBy = req.user._id;
     task.approvedAt = new Date();
+    console.log('Updating task status:', {
+      taskId: task._id,
+      newStatus: task.status,
+      approvedBy: task.approvedBy,
+      approvedAt: task.approvedAt
+    });
+    
     await task.save();
 
-    // Return updated task
-    const updatedTask = await Task.findById(task._id).populate('assignedTo', 'name');
+    // Return updated task with populated fields
+    const updatedTask = await Task.findById(task._id)
+      .populate('assignedTo', 'name')
+      .populate('approvedBy', 'name');
     
+    console.log('Task approval completed successfully:', {
+      taskId: task._id,
+      userId: user._id,
+      points: taskPoints,
+      newBalance: user.accountBalance
+    });
+
     res.json({
       task: updatedTask,
       message: `Task approved and ${taskPoints} points added to ${user.name}'s account`
     });
 
   } catch (error) {
-    console.error('Error in approveTask:', error);
+    console.error('Error in approveTask:', {
+      error: error.message,
+      stack: error.stack,
+      taskId: req.params.id,
+      userId: req.user?._id
+    });
     res.status(500).json({ 
       message: 'Server error while approving task', 
-      error: error.message 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

@@ -1,63 +1,92 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Box } from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Typography,
+  Box
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 
 const CustomDialog = ({ open, onClose, onSubmit, title, children }) => {
-  const glassyStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '15px',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-  };
-
   return (
     <Dialog 
       open={open} 
-      onClose={onClose} 
-      fullWidth 
+      onClose={onClose}
       maxWidth="sm"
+      fullWidth
       PaperProps={{
-        style: glassyStyle
+        sx: {
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '15px',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+          border: '1px solid rgba(255, 255, 255, 0.18)',
+        }
       }}
     >
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        <Box sx={{
-          '& .MuiTextField-root': {
-            '& .MuiOutlinedInput-root': {
-              '&.Mui-focused fieldset': {
-                borderColor: '#d35400', // Rusty orange
-              },
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#d35400', // Rusty orange
-            },
-          },
-        }}>
-          {children}
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <IconButton onClick={onClose} sx={{ color: 'red' }}>
-          <CloseIcon />
-        </IconButton>
-        <IconButton 
-          onClick={onSubmit} 
-          sx={{ 
-            backgroundColor: 'green',
+      <DialogTitle
+        sx={{
+          backgroundColor: 'rgba(26, 71, 49, 0.9)',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
+          p: 2,
+        }}
+      >
+        <Typography variant="h6">{title}</Typography>
+        <IconButton
+          onClick={onClose}
+          sx={{
             color: 'white',
             '&:hover': {
-              backgroundColor: 'darkgreen',
-            },
-            width: 40,
-            height: 40,
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            }
           }}
         >
-          <CheckIcon />
+          <CloseIcon />
         </IconButton>
-      </DialogActions>
+      </DialogTitle>
+      <form onSubmit={onSubmit}>
+        <DialogContent sx={{ mt: 2 }}>
+          {children}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, justifyContent: 'center', gap: 2 }}>
+          <IconButton
+            onClick={onClose}
+            sx={{
+              backgroundColor: '#d32f2f',
+              color: 'white',
+              width: '48px',
+              height: '48px',
+              '&:hover': {
+                backgroundColor: '#b71c1c',
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <IconButton
+            type="submit"
+            sx={{
+              backgroundColor: '#1a4731',
+              color: 'white',
+              width: '48px',
+              height: '48px',
+              '&:hover': {
+                backgroundColor: '#2c3e50',
+              },
+            }}
+          >
+            <CheckIcon />
+          </IconButton>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };

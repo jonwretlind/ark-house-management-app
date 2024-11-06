@@ -12,4 +12,10 @@ pm2 start ecosystem.config.js --env production
 # Save PM2 process list and environment
 pm2 save
 
+# Setup PM2 to start on system boot
+pm2 startup
+
+# Save PM2 process list and environment
+pm2 save
+
 # Setup PM2 to start on system boot 

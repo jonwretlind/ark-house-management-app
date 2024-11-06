@@ -1,110 +1,113 @@
 // routes/authRoutes.js
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import { authenticateUser } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Login route
-router.post('/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        
-        // Validate input
-        if (!username || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
-        }
-
-        // Find user by email
-        const user = await User.findOne({ email: username });
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.passwordHash);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Create token with ALL user data needed for authentication
-        const tokenPayload = {
-            id: user._id,
-            email: user.email,
-            isAdmin: user.isAdmin,  // Critical for admin checks
-            name: user.name
-        };
-
-        console.log('Creating token with payload:', tokenPayload); // Debug log
-
-        const token = jwt.sign(
-            tokenPayload,
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        // Verify token immediately after creation
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Verified token contains:', decoded); // Debug log
-
-        // Set cookie
-        res.cookie('session_token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000
-        });
-
-        // Send response
-        res.json({
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                isAdmin: user.isAdmin,
-                accountBalance: user.accountBalance
-            }
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-});
-
-// Get current user route
+// GET /api/auth/me - Get current user
 router.get('/me', authenticateUser, async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select('-passwordHash');
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.json(user);
-    } catch (error) {
-        console.error('Get current user error:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-// Logout route
-router.post('/logout', (req, res) => {
-    res.clearCookie('session_token');
-    res.json({ message: 'Logged out successfully' });
-});
-
-// Add this temporary debug route
-router.get('/debug-user', authenticateUser, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    console.log('GET /me - User ID from token:', req.user.id);
+    
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      console.log('User not found in database');
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log('User found:', user);
+    res.json(user);
+  } catch (error) {
+    console.error('Error in /me route:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// POST /api/auth/login - Login user
+router.post('/login', async (req, res) => {
+  try {
+    console.log('Login request body:', req.body);
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      console.log('Missing credentials:', { email: !!email, password: !!password });
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    console.log('Login attempt for email:', email);
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log('User not found:', email);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    console.log('Found user:', { 
+      id: user._id, 
+      hasPassword: !!user.password,
+      email: user.email 
+    });
+
+    // Check password
+    try {
+      const isMatch = await user.comparePassword(password);
+      console.log('Password match result:', isMatch);
+
+      if (!isMatch) {
+        console.log('Invalid password for user:', email);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+    } catch (error) {
+      console.error('Password comparison error:', error);
+      return res.status(500).json({ message: 'Error verifying credentials' });
+    }
+
+    // Create token
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Set cookie with specific options
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/'
+    });
+
+    console.log('Login successful for user:', email);
+    console.log('Set-Cookie header:', res.getHeader('Set-Cookie'));
+
     res.json({
-      databaseUser: user,
-      requestUser: req.user,
-      token: req.cookies.session_token
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin
+      }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      message: 'Error logging in',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
+});
+
+// POST /api/auth/logout - Logout user
+router.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logged out successfully' });
 });
 
 export default router;

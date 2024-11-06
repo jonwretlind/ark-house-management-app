@@ -6,12 +6,16 @@ import theme from '../theme';
 import backgroundImage from '../../assets/screen2.png';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CustomDialog from '../components/CustomDialog';
+import TextField from '@mui/material/TextField';
 
 const AllTasksScreen = () => {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState('All');
   const [currentUser, setCurrentUser] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,6 +67,31 @@ const AllTasksScreen = () => {
            (typeof task.assignedTo === 'object' && task.assignedTo._id === filter);
   });
 
+  const handleEditTask = (task) => {
+    setEditingTask(task);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await axios.delete(`/tasks/${taskId}`, { withCredentials: true });
+      fetchAllTasks(); // Refresh the tasks list
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleUpdateTask = async (updatedTask) => {
+    try {
+      await axios.put(`/tasks/${editingTask._id}`, updatedTask, { withCredentials: true });
+      setEditDialogOpen(false);
+      setEditingTask(null);
+      fetchAllTasks(); // Refresh the tasks list
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -113,8 +142,61 @@ const AllTasksScreen = () => {
           padding: '2rem',
         }}>
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Filter Tasks</InputLabel>
-            <Select value={filter} onChange={handleFilterChange}>
+            <InputLabel sx={{ 
+              color: 'rgba(255, 255, 255, 0.7)',
+              '&.Mui-focused': {
+                color: 'white',
+              }
+            }}>
+              Filter Tasks
+            </InputLabel>
+            <Select 
+              value={filter} 
+              onChange={handleFilterChange}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'white',
+                },
+                '& .MuiSelect-select': {
+                  color: 'white',
+                },
+                '& .MuiSvgIcon-root': { // Dropdown icon
+                  color: 'white',
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    backgroundColor: 'rgba(26, 71, 49, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '15px',
+                    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                    '& .MuiMenuItem-root': {
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        },
+                      },
+                    },
+                  },
+                },
+              }}
+            >
               <MenuItem value="All">All Tasks</MenuItem>
               <MenuItem value="Unassigned">Unassigned</MenuItem>
               {users.map(user => (
@@ -132,10 +214,42 @@ const AllTasksScreen = () => {
                 currentUser={currentUser}
                 refreshTasks={fetchAllTasks}
                 showAssignedTo={true}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
               />
             ))}
           </Box>
         </Container>
+
+        <CustomDialog
+          open={editDialogOpen}
+          onClose={() => {
+            setEditDialogOpen(false);
+            setEditingTask(null);
+          }}
+          onSubmit={handleUpdateTask}
+          title="Edit Task"
+        >
+          {editingTask && (
+            <>
+              <TextField name="name" label="Task Name" fullWidth defaultValue={editingTask.name} />
+              <TextField name="description" label="Description" fullWidth defaultValue={editingTask.description} />
+              <TextField name="dueDate" type="date" fullWidth defaultValue={editingTask.dueDate?.split('T')[0]} InputLabelProps={{ shrink: true }} />
+              <TextField name="points" type="number" fullWidth defaultValue={editingTask.points} />
+              <FormControl fullWidth>
+                <InputLabel>Assign To</InputLabel>
+                <Select name="assignedTo" defaultValue={editingTask.assignedTo?._id || editingTask.assignedTo || ""}>
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {users.map((user) => (
+                    <MenuItem key={user._id} value={user._id}>
+                      {user.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </>
+          )}
+        </CustomDialog>
       </Box>
     </ThemeProvider>
   );

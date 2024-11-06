@@ -12,10 +12,9 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure multer for avatar uploads - use project root directory
+// Configure multer for avatar uploads
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    // Go up two levels from routes to get to project root
     const uploadPath = path.join(__dirname, '../../uploads/avatars');
     cb(null, uploadPath);
   },
@@ -55,17 +54,26 @@ router.get('/leaderboard', async (req, res) => {
 });
 
 // Get all users (protected, admin only)
-router.get('/', async (req, res) => {
-    try {
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ message: 'Admin access required' });
-        }
-        const users = await User.find().select('-passwordHash');
-        res.json(users);
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ message: 'Server error' });
+router.get('/', authenticateUser, async (req, res) => {
+  try {
+    console.log('GET /users - Authenticated user:', req.user);
+    
+    // Check if user is admin
+    const user = await User.findById(req.user.id);
+    if (!user?.isAdmin) {
+      console.log('Non-admin user attempted to access users list');
+      return res.status(403).json({ message: 'Admin access required' });
     }
+
+    const users = await User.find({}).select('-password');
+    res.json(users);
+  } catch (error) {
+    console.error('Error in GET /users:', error);
+    res.status(500).json({ 
+      message: 'Error fetching users',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
 // Get single user by ID
@@ -115,12 +123,21 @@ router.post('/avatar', authenticateUser, upload.single('avatar'), async (req, re
     }
 
     const user = await User.findById(req.user._id);
-    const avatarUrl = `/api/uploads/avatars/${req.file.filename}`;
+    // Store the path relative to uploads directory
+    const avatarUrl = `avatars/${req.file.filename}`;
     user.avatarUrl = avatarUrl;
     await user.save();
 
-    res.json({ avatarUrl });
+    console.log('Avatar uploaded:', {
+      filename: req.file.filename,
+      savedUrl: avatarUrl,
+      fullUrl: `/api/uploads/${avatarUrl}`
+    });
+
+    // Return the full URL path with /api prefix
+    res.json({ avatarUrl: `/api/uploads/${avatarUrl}` });
   } catch (error) {
+    console.error('Error uploading avatar:', error);
     res.status(500).json({ message: 'Error uploading avatar', error: error.message });
   }
 });
@@ -152,6 +169,32 @@ router.put('/change-password', authenticateUser, async (req, res) => {
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating password', error: error.message });
+  }
+});
+
+// Update the profile route
+router.get('/profile', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Format the avatar URL if it exists
+    if (user.avatarUrl) {
+      // Ensure the URL starts with /api/uploads/
+      user.avatarUrl = `/api/uploads/${user.avatarUrl.replace(/^\/?(api\/)?(uploads\/)?/, '')}`;
+    }
+
+    console.log('Sending user profile:', {
+      userId: user._id,
+      avatarUrl: user.avatarUrl
+    });
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error in profile route:', error);
+    res.status(500).json({ message: 'Error fetching profile' });
   }
 });
 

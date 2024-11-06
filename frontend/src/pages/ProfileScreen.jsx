@@ -27,6 +27,7 @@ import axios from '../utils/api';
 import theme from '../theme';
 import backgroundImage from '../../assets/screen2.png';
 import UserAvatar from '../components/UserAvatar';
+import { formatAvatarUrl } from '../utils/avatarHelper';
 
 const ProfileScreen = () => {
   const navigate = useNavigate();
@@ -151,12 +152,16 @@ const ProfileScreen = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
+      console.log('Avatar upload response:', response.data);
+      
       const updatedUser = { ...user, avatarUrl: response.data.avatarUrl };
       setUser(updatedUser);
       setEditedUser(updatedUser);
+      
       setSuccess('Avatar updated successfully');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error uploading avatar:', error);
       setError('Error uploading avatar');
       setTimeout(() => setError(''), 3000);
     }
@@ -219,16 +224,15 @@ const ProfileScreen = () => {
           }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
               <Box sx={{ position: 'relative' }}>
-                <UserAvatar
-                  user={user}
-                  size={120}
-                  sx={{ 
+                <Avatar
+                  alt={user.name}
+                  src={formatAvatarUrl(user.avatarUrl)}
+                  sx={{
+                    width: 150,
+                    height: 150,
                     mb: 2,
-                    border: '4px solid rgba(255, 255, 255, 0.2)',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    color: '#2c3e50',
-                    fontSize: '3rem'
+                    border: '3px solid white',
+                    boxShadow: '0 0 10px rgba(0,0,0,0.3)'
                   }}
                 />
                 <input

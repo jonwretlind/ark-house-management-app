@@ -20,13 +20,15 @@ const StartScreen = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const response = await axios.get('/auth/me', { withCredentials: true });
+        console.log('Checking session...');
+        const response = await axios.get('/auth/me');
+        console.log('Session check response:', response.data);
+        
         if (response.data) {
-          navigate('/dashboard'); // Redirect if user is already logged in
+          navigate('/dashboard');
         }
       } catch (error) {
-        console.log('No active session found, stay on login screen.');
-      } finally {
+        console.log('No active session:', error);
         setLoading(false);
       }
     };
@@ -40,14 +42,14 @@ const StartScreen = () => {
     setError(null);
 
     if (!email || !password) {
-      setError('Username and password are required');
+      setError('Email and password are required');
       return;
     }
 
     try {
-      console.log('Attempting login with:', { username: email.trim() }); // Log the attempt
+      console.log('Attempting login with:', { email: email.trim() }); // Log the attempt
       const response = await axios.post('/auth/login', {
-        username: email.trim(),
+        email: email.trim(),
         password: password.trim()
       });
 

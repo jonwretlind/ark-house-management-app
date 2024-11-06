@@ -60,11 +60,43 @@ const TaskCard = ({ task, onEdit, onDelete, isDragging, dragRef, showAssignedUse
 
   const handleApprove = async () => {
     try {
-      const response = await axios.put(`/tasks/${task._id}/approve`, {}, { withCredentials: true });
-      console.log('Task approved:', response.data);
-      refreshTasks();
+      console.log('Attempting to approve task:', task._id);
+      const response = await axios.put(`/tasks/${task._id}/approve`, {}, { 
+        withCredentials: true,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Task approval response:', response.data);
+      
+      if (refreshTasks) {
+        await refreshTasks();
+      }
     } catch (error) {
-      console.error('Error approving task:', error);
+      console.error('Error approving task:', {
+        error,
+        taskId: task._id,
+        userId: currentUser?._id,
+        errorResponse: error.response?.data
+      });
+    }
+  };
+
+  const handleEdit = () => {
+    if (typeof onEdit === 'function') {
+      onEdit(task);
+    } else {
+      console.error('onEdit is not provided or not a function');
+    }
+  };
+
+  const handleDelete = () => {
+    if (typeof onDelete === 'function') {
+      onDelete(task._id);
+    } else {
+      console.error('onDelete is not provided or not a function');
     }
   };
 
@@ -123,10 +155,10 @@ const TaskCard = ({ task, onEdit, onDelete, isDragging, dragRef, showAssignedUse
         )}
         {currentUser && currentUser.isAdmin && (
           <>
-            <IconButton onClick={() => onEdit(task)} aria-label="edit" size="small" sx={{ color: theme.palette.primary.main }}>
+            <IconButton onClick={handleEdit} aria-label="edit" size="small" sx={{ color: theme.palette.primary.main }}>
               <EditIcon fontSize="small" />
             </IconButton>
-            <IconButton onClick={() => onDelete(task._id)} aria-label="delete" size="small" sx={{ color: theme.palette.secondary.main }}>
+            <IconButton onClick={handleDelete} aria-label="delete" size="small" sx={{ color: theme.palette.secondary.main }}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </>

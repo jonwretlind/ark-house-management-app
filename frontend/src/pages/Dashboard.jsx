@@ -24,6 +24,7 @@ import MessageIcon from '@mui/icons-material/Message';
 import { useSwipeable } from 'react-swipeable';
 import ActiveMessageDialog from '../components/ActiveMessageDialog';
 import MessagesDialog from '../components/MessagesDialog';
+import { formatAvatarUrl } from '../utils/avatarHelper';
 
 const theme = createTheme({
   palette: {
@@ -183,7 +184,6 @@ const Dashboard = () => {
         axios.get('/messages', { withCredentials: true })
       ]);
 
-      // Check if eventsRes.data is an object with an 'events' property
       const events = eventsRes.data.events || [];
       const messages = messagesRes.data || [];
 
@@ -194,8 +194,10 @@ const Dashboard = () => {
 
       setFeed(combinedFeed);
       setHasNewEvents(eventsRes.data.hasNewEvents);
+      
+      setEvents(events);
     } catch (error) {
-      console.error('Error fetching feed:', error);
+      console.error('Error refreshing feed:', error);
     }
   };
 
@@ -232,8 +234,16 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('/events', { withCredentials: true });
-        setEvents(response.data);
+        console.log('Fetching events...');
+        const response = await axios.get('/events', { 
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        console.log('Events response:', response.data);
+        setEvents(response.data.events);
+        setHasNewEvents(response.data.hasNewEvents);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -261,7 +271,14 @@ const Dashboard = () => {
 
   const handleEventIconClick = async () => {
     try {
-      await axios.post('/events/mark-viewed', {}, { withCredentials: true });
+      console.log('Marking events as viewed...');
+      await axios.post('/events/mark-viewed', {}, { 
+        withCredentials: true,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       setHasNewEvents(false);
       navigate('/events');
     } catch (error) {
@@ -315,13 +332,6 @@ const Dashboard = () => {
     return null;
   }
 
-  const formatAvatarUrl = (url) => {
-    if (!url) return '';
-    // Extract just the filename part after 'avatars/'
-    const match = url.match(/avatars\/[^/]+$/);
-    return match ? match[0] : '';
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -353,7 +363,7 @@ const Dashboard = () => {
           <Toolbar>
             <Avatar 
               alt={user.name} 
-              src={user.avatarUrl ? `/api/uploads/${formatAvatarUrl(user.avatarUrl)}` : undefined}
+              src={formatAvatarUrl(user.avatarUrl)}
               sx={{ 
                 mr: 2,
                 cursor: 'pointer',
@@ -472,7 +482,19 @@ const Dashboard = () => {
           )}
         </Container>
 
-        <EventForm open={eventFormOpen} handleClose={() => setEventFormOpen(false)} refreshEvents={refreshFeed} />
+        <EventForm 
+          open={eventFormOpen} 
+          handleClose={() => setEventFormOpen(false)} 
+          onSubmit={async (eventData) => {
+            try {
+              const response = await axios.post('/events', eventData);
+              await refreshFeed();
+              setEventFormOpen(false);
+            } catch (error) {
+              console.error('Error creating event:', error);
+            }
+          }}
+        />
         <MessageForm open={messageFormOpen} handleClose={() => setMessageFormOpen(false)} refreshMessages={refreshFeed} />
         <ActiveMessageDialog
           open={messageDialogOpen}
