@@ -33,15 +33,14 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://172.179.241.232:5173',  // Add your Azure IP with frontend port
-    'http://172.179.241.232:5000',  // Add your Azure IP with backend port
-    'http://172.179.241.232'        // Add your Azure IP without port
-  ],
+  origin: function(origin, callback) {
+    // Allow all origins during testing
+    callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
+  exposedHeaders: ['set-cookie']
 }));
 
 // Basic middleware
@@ -74,6 +73,18 @@ app.use('/uploads/avatars', (req, res, next) => {
     res.set('Cache-Control', 'public, max-age=31557600'); // Cache for 1 year
   }
 }));
+
+// Add this before your routes to debug requests
+app.use((req, res, next) => {
+  console.log('Incoming request:', {
+    method: req.method,
+    path: req.path,
+    origin: req.headers.origin,
+    cookies: req.cookies,
+    headers: req.headers
+  });
+  next();
+});
 
 // API routes
 app.use('/api/auth', authRoutes);

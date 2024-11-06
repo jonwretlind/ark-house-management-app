@@ -3,27 +3,27 @@ import User from '../models/User.js';
 
 export const authenticateUser = async (req, res, next) => {
     try {
-        // Get token from session_token cookie instead of jwt
-        const token = req.cookies.session_token;
+        console.log('Auth middleware - cookies:', req.cookies);
+        console.log('Auth middleware - headers:', req.headers);
 
+        const token = req.cookies.token;
+        
         if (!token) {
-            return res.status(401).json({ message: 'Authentication required' });
+            console.log('No token found in cookies');
+            return res.status(401).json({ message: 'No authentication token found' });
         }
 
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Find user
-        const user = await User.findById(decoded.id);
-        if (!user) {
-            return res.status(401).json({ message: 'User not found' });
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log('Token decoded:', decoded);
+            req.user = decoded;
+            next();
+        } catch (error) {
+            console.log('Token verification failed:', error.message);
+            return res.status(401).json({ message: 'Token verification failed' });
         }
-
-        // Attach user to request object
-        req.user = user;
-        next();
     } catch (error) {
         console.error('Auth middleware error:', error);
-        res.status(401).json({ message: 'Authentication failed' });
+        res.status(500).json({ message: 'Server error in auth middleware' });
     }
 }; 
