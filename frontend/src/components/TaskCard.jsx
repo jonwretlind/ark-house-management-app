@@ -15,17 +15,19 @@ const TaskCard = ({ task, onEdit, onDelete, isDragging, dragRef, showAssignedUse
 
   useEffect(() => {
     const fetchAssignedUser = async () => {
-      if (task.assignedTo && task.assignedTo !== "Unassigned") {
-        try {
-          const userId = task.assignedTo._id || task.assignedTo;
-          const response = await axios.get(`/users/${userId}`, { withCredentials: true });
-          setAssignedUserName(response.data.name);
-        } catch (error) {
-          console.error('Error fetching assigned user:', error);
-          setAssignedUserName('Unknown User');
-        }
-      } else {
+      if (!task.assignedTo || task.assignedTo === "Unassigned" || 
+          (typeof task.assignedTo === 'object' && (!task.assignedTo._id || task.assignedTo.name === "Unassigned"))) {
         setAssignedUserName('Unassigned');
+        return;
+      }
+
+      try {
+        const userId = task.assignedTo._id || task.assignedTo;
+        const response = await axios.get(`/users/${userId}`, { withCredentials: true });
+        setAssignedUserName(response.data.name);
+      } catch (error) {
+        console.error('Error fetching assigned user:', error);
+        setAssignedUserName('Unknown User');
       }
     };
 

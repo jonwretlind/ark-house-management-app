@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Select, MenuItem, FormControl, InputLabel, Fab } from '@mui/material';
 import axios from '../utils/api';
 import TaskCard from '../components/TaskCard';
 import theme from '../theme';
@@ -8,6 +8,11 @@ import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CustomDialog from '../components/CustomDialog';
 import TextField from '@mui/material/TextField';
+import AddIcon from '@mui/icons-material/Add';
+import logo from '../../assets/logo.png';
+
+const iconContext = import.meta.glob('../../assets/icons/*.{png,jpg,jpeg,svg}', { eager: true, query: '?url', import: 'default' });
+const iconOptions = Object.values(iconContext);
 
 const AllTasksScreen = () => {
   const [tasks, setTasks] = useState([]);
@@ -16,6 +21,15 @@ const AllTasksScreen = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newTask, setNewTask] = useState({
+    name: '',
+    description: '',
+    dueDate: '',
+    points: '',
+    assignedTo: '',
+    icon: '',
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +41,10 @@ const AllTasksScreen = () => {
   const fetchAllTasks = async () => {
     try {
       const response = await axios.get('/tasks', { withCredentials: true });
-      const incompleteTasks = response.data.filter(task => !task.isCompleted);
+      const incompleteTasks = response.data.filter(task => !task.isCompleted).map(task => ({
+        ...task,
+        assignedTo: task.assignedTo || "Unassigned"
+      }));
       setTasks(incompleteTasks);
     } catch (error) {
       console.error('Error fetching all tasks:', error.response || error);
@@ -61,10 +78,9 @@ const AllTasksScreen = () => {
     if (filter === 'Unassigned') {
       return !task.assignedTo || 
              task.assignedTo === "Unassigned" || 
-             (typeof task.assignedTo === 'object' && task.assignedTo.name === "Unassigned");
+             (typeof task.assignedTo === 'object' && !task.assignedTo._id);
     }
-    return (typeof task.assignedTo === 'string' && task.assignedTo === filter) ||
-           (typeof task.assignedTo === 'object' && task.assignedTo._id === filter);
+    return (typeof task.assignedTo === 'object' && task.assignedTo._id === filter);
   });
 
   const handleEditTask = (task) => {
@@ -90,6 +106,37 @@ const AllTasksScreen = () => {
     } catch (error) {
       console.error('Error updating task:', error);
     }
+  };
+
+  const handleCreateTask = async (formData) => {
+    try {
+      const taskData = {
+        name: formData.name,
+        description: formData.description,
+        dueDate: formData.dueDate,
+        points: parseInt(formData.points),
+        assignedTo: formData.assignedTo || "Unassigned",
+        icon: formData.icon || logo,
+      };
+
+      await axios.post('/tasks', taskData, { 
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      setCreateDialogOpen(false);
+      fetchAllTasks();
+    } catch (error) {
+      console.error('Error creating task:', error.response?.data || error);
+    }
+  };
+
+  const handleChange = (e) => {
+    setNewTask({ 
+      ...newTask, 
+      [e.target.name]: e.target.value 
+    });
   };
 
   return (
@@ -221,6 +268,21 @@ const AllTasksScreen = () => {
           </Box>
         </Container>
 
+        {currentUser && currentUser.isAdmin && (
+          <Fab 
+            color="primary" 
+            aria-label="add" 
+            onClick={() => setCreateDialogOpen(true)}
+            sx={{
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        )}
+
         <CustomDialog
           open={editDialogOpen}
           onClose={() => {
@@ -232,14 +294,50 @@ const AllTasksScreen = () => {
         >
           {editingTask && (
             <>
-              <TextField name="name" label="Task Name" fullWidth defaultValue={editingTask.name} />
-              <TextField name="description" label="Description" fullWidth defaultValue={editingTask.description} />
-              <TextField name="dueDate" type="date" fullWidth defaultValue={editingTask.dueDate?.split('T')[0]} InputLabelProps={{ shrink: true }} />
-              <TextField name="points" type="number" fullWidth defaultValue={editingTask.points} />
-              <FormControl fullWidth>
+              <TextField 
+                name="name" 
+                label="Task Name" 
+                fullWidth 
+                defaultValue={editingTask.name}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+              />
+              <TextField 
+                name="description" 
+                label="Description" 
+                fullWidth 
+                defaultValue={editingTask.description}
+                multiline
+                rows={4}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+              />
+              <TextField 
+                name="dueDate" 
+                type="date" 
+                fullWidth 
+                defaultValue={editingTask.dueDate?.split('T')[0]} 
+                InputLabelProps={{ shrink: true }}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+              />
+              <TextField 
+                name="points" 
+                type="number" 
+                fullWidth 
+                defaultValue={editingTask.points}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+              />
+              <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Assign To</InputLabel>
-                <Select name="assignedTo" defaultValue={editingTask.assignedTo?._id || editingTask.assignedTo || ""}>
-                  <MenuItem value="">Unassigned</MenuItem>
+                <Select 
+                  name="assignedTo" 
+                  defaultValue={editingTask.assignedTo?._id || editingTask.assignedTo || "Unassigned"}
+                  label="Assign To"
+                  onChange={handleChange}
+                >
+                  <MenuItem value="Unassigned">Unassigned</MenuItem>
                   {users.map((user) => (
                     <MenuItem key={user._id} value={user._id}>
                       {user.name}
@@ -247,8 +345,135 @@ const AllTasksScreen = () => {
                   ))}
                 </Select>
               </FormControl>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Icon</InputLabel>
+                <Select
+                  name="icon"
+                  value={newTask.icon || editingTask.icon || ""}
+                  onChange={handleChange}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <img src={selected || logo} alt="Task icon" style={{ width: 30, height: 30, marginRight: 10 }} />
+                      {selected ? selected.split('/').pop() : 'Default Logo'}
+                    </Box>
+                  )}
+                >
+                  <MenuItem value="">
+                    <em>Default Logo</em>
+                  </MenuItem>
+                  {iconOptions.map((icon, index) => (
+                    <MenuItem key={index} value={icon}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <img src={icon} alt={`Icon ${index + 1}`} style={{ width: 30, height: 30, marginRight: 10 }} />
+                        {icon.split('/').pop()}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </>
           )}
+        </CustomDialog>
+
+        <CustomDialog
+          open={createDialogOpen}
+          onClose={() => {
+            setCreateDialogOpen(false);
+            setNewTask({
+              name: '',
+              description: '',
+              dueDate: '',
+              points: '',
+              assignedTo: '',
+              icon: '',
+            });
+          }}
+          onSubmit={() => handleCreateTask(newTask)}
+          title="Create New Task"
+        >
+          <TextField 
+            name="name" 
+            label="Task Name" 
+            fullWidth 
+            required
+            value={newTask.name}
+            onChange={handleChange}
+            sx={{ mb: 2 }}
+          />
+          <TextField 
+            name="description" 
+            label="Description" 
+            fullWidth 
+            multiline
+            rows={4}
+            value={newTask.description}
+            onChange={handleChange}
+            sx={{ mb: 2 }}
+          />
+          <TextField 
+            name="dueDate" 
+            type="date" 
+            fullWidth 
+            required
+            value={newTask.dueDate}
+            onChange={handleChange}
+            InputLabelProps={{ shrink: true }}
+            label="Due Date"
+            sx={{ mb: 2 }}
+          />
+          <TextField 
+            name="points" 
+            type="number" 
+            label="Points" 
+            fullWidth 
+            required
+            value={newTask.points}
+            onChange={handleChange}
+            inputProps={{ min: 0 }}
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Assign To</InputLabel>
+            <Select 
+              name="assignedTo" 
+              value={newTask.assignedTo}
+              onChange={handleChange}
+              label="Assign To"
+            >
+              <MenuItem value="Unassigned">Unassigned</MenuItem>
+              {users.map((user) => (
+                <MenuItem key={user._id} value={user._id}>
+                  {user.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Icon</InputLabel>
+            <Select
+              name="icon"
+              value={newTask.icon}
+              onChange={handleChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <img src={selected || logo} alt="Task icon" style={{ width: 30, height: 30, marginRight: 10 }} />
+                  {selected ? selected.split('/').pop() : 'Default Logo'}
+                </Box>
+              )}
+            >
+              <MenuItem value="">
+                <em>Default Logo</em>
+              </MenuItem>
+              {iconOptions.map((icon, index) => (
+                <MenuItem key={index} value={icon}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <img src={icon} alt={`Icon ${index + 1}`} style={{ width: 30, height: 30, marginRight: 10 }} />
+                    {icon.split('/').pop()}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </CustomDialog>
       </Box>
     </ThemeProvider>
