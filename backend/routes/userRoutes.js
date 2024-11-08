@@ -44,9 +44,16 @@ router.use(authenticateUser);
 router.get('/leaderboard', async (req, res) => {
     try {
         const users = await User.find()
-            .select('name accountBalance')
+            .select('name accountBalance avatarUrl')
             .sort({ accountBalance: -1 });
-        res.json(users);
+
+        // Format the avatar URLs before sending
+        const formattedUsers = users.map(user => ({
+            ...user.toObject(),
+            avatarUrl: user.avatarUrl ? `/api/uploads/${user.avatarUrl.replace(/^\/?(api\/)?(uploads\/)?/, '')}` : null
+        }));
+
+        res.json(formattedUsers);
     } catch (error) {
         console.error('Error fetching leaderboard:', error);
         res.status(500).json({ message: 'Server error' });

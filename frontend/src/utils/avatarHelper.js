@@ -1,11 +1,16 @@
 export const formatAvatarUrl = (url) => {
-  if (!url) return '';
+  if (!url) return null;
+  
+  // If the URL is already a full URL (starts with http:// or https://)
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
   
   // If the URL already contains '/api/uploads/', just return it
   if (url.includes('/api/uploads/')) return url;
   
   // If it's just the filename or starts with avatars/, add the full path
-  if (url.startsWith('avatars/') || !url.startsWith('/')) {
+  if (url.startsWith('avatars/') || !url.includes('/')) {
     return `/api/uploads/${url}`;
   }
   

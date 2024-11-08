@@ -87,7 +87,14 @@ export const getLeaderboard = async (req, res) => {
     const users = await User.find({}, 'name avatarUrl accountBalance')
       .sort({ accountBalance: -1 })
       .limit(10);
-    res.status(200).json(users);
+    
+    // Format the avatar URLs before sending
+    const formattedUsers = users.map(user => ({
+      ...user.toObject(),
+      avatarUrl: user.avatarUrl ? `/api/uploads/${user.avatarUrl.replace(/^\/?(api\/)?(uploads\/)?/, '')}` : null
+    }));
+    
+    res.status(200).json(formattedUsers);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     res.status(500).json({ message: 'Failed to fetch leaderboard.' });
