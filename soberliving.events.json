@@ -1,0 +1,50 @@
+[{
+  "_id": {
+    "$oid": "67192ae02b86f054b3af8c81"
+  },
+  "name": "House meetings",
+  "location": "Ark dining Room",
+  "date": {
+    "$date": "2024-10-28T00:00:00.000Z"
+  },
+  "time": "18:30",
+  "description": "Dinner and meetings with the house. It's TACO night!!!!",
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "createdAt": {
+    "$date": "2024-10-23T16:57:04.995Z"
+  },
+  "__v": 3,
+  "attendees": [
+    null
+  ],
+  "updatedAt": {
+    "$date": "2024-10-31T20:17:28.474Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "671ba1e9c6b9c65842fcd5b5"
+  },
+  "name": "Barbeque",
+  "description": "A neighborhood get together. Bring  Friend!",
+  "date": {
+    "$date": "2024-11-09T00:00:00.000Z"
+  },
+  "time": "15:00",
+  "location": "Out back",
+  "attendees": [
+    null
+  ],
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "createdAt": {
+    "$date": "2024-10-25T13:49:29.887Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-31T20:07:56.668Z"
+  },
+  "__v": 1
+}]

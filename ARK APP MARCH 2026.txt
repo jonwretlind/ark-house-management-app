@@ -1,0 +1,5 @@
+ARK APP MARCH 2026
+---------------
+Admin User:
+npm run seed:admin -- --name "Local Admin" --
+email "design@jonwretlind.com" --password "Admin@123!"

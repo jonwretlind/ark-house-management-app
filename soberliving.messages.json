@@ -1,0 +1,261 @@
+[{
+  "_id": {
+    "$oid": "67214a61dc9d79f1e889a92e"
+  },
+  "title": "Lock your doors",
+  "content": "Be sure to lock all outside doors at night!",
+  "isActive": true,
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "createdAt": {
+    "$date": "2024-10-29T20:49:37.611Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-31T19:20:37.739Z"
+  },
+  "__v": 0,
+  "readBy": [
+    {
+      "$oid": "6710511ec569b8255833b72c"
+    }
+  ],
+  "userStatuses": [
+    {
+      "user": {
+        "$oid": "6710511ec569b8255833b72c"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-30T16:29:21.944Z"
+      },
+      "_id": {
+        "$oid": "67225ed44ce9d5086208fafe"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67105c9bbd16c4b7fa79bbfe"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-31T19:20:37.739Z"
+      },
+      "_id": {
+        "$oid": "67225ed44ce9d5086208faff"
+      }
+    },
+    {
+      "user": {
+        "$oid": "6719907a8ae9f1f4c7b2c771"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "67225ed44ce9d5086208fb00"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67212e007ed942207988ce0c"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "67225ed44ce9d5086208fb01"
+      }
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "6722577fe9228c8ca046ce60"
+  },
+  "title": "Keep your beds made",
+  "content": "Let's all do our part to keep the Ark shipshape!",
+  "isActive": true,
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "userStatuses": [
+    {
+      "user": {
+        "$oid": "6710511ec569b8255833b72c"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-30T16:43:54.660Z"
+      },
+      "_id": {
+        "$oid": "6722623c4ce9d508620900f7"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67105c9bbd16c4b7fa79bbfe"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-31T19:20:37.758Z"
+      },
+      "_id": {
+        "$oid": "6722623c4ce9d508620900f8"
+      }
+    },
+    {
+      "user": {
+        "$oid": "6719907a8ae9f1f4c7b2c771"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "6722623c4ce9d508620900f9"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67212e007ed942207988ce0c"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "6722623c4ce9d508620900fa"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2024-10-30T15:57:53.263Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-31T19:20:37.758Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67225d244ce9d5086208f9ac"
+  },
+  "title": "Don't adjust the thermostat",
+  "content": "Dad says keep it where it is! Were you born in a barn???",
+  "isActive": true,
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "userStatuses": [
+    {
+      "user": {
+        "$oid": "6710511ec569b8255833b72c"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-30T16:43:54.657Z"
+      },
+      "_id": {
+        "$oid": "6722623a4ce9d508620900d9"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67105c9bbd16c4b7fa79bbfe"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-31T19:20:37.702Z"
+      },
+      "_id": {
+        "$oid": "6722623a4ce9d508620900da"
+      }
+    },
+    {
+      "user": {
+        "$oid": "6719907a8ae9f1f4c7b2c771"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "6722623a4ce9d508620900db"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67212e007ed942207988ce0c"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "6722623a4ce9d508620900dc"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2024-10-30T16:21:56.835Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-31T19:20:37.706Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "672260f24ce9d5086208fdd5"
+  },
+  "title": "Pray for your brothers",
+  "content": "We all have needs which we may or may not mention, but God knows them all. Be sure to lift each other up in prayer regularly!",
+  "isActive": true,
+  "createdBy": {
+    "$oid": "6710511ec569b8255833b72c"
+  },
+  "userStatuses": [
+    {
+      "user": {
+        "$oid": "6710511ec569b8255833b72c"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-30T16:43:54.641Z"
+      },
+      "_id": {
+        "$oid": "672262384ce9d508620900bb"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67105c9bbd16c4b7fa79bbfe"
+      },
+      "isActive": false,
+      "viewedAt": {
+        "$date": "2024-10-31T19:20:37.717Z"
+      },
+      "_id": {
+        "$oid": "672262384ce9d508620900bc"
+      }
+    },
+    {
+      "user": {
+        "$oid": "6719907a8ae9f1f4c7b2c771"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "672262384ce9d508620900bd"
+      }
+    },
+    {
+      "user": {
+        "$oid": "67212e007ed942207988ce0c"
+      },
+      "isActive": true,
+      "viewedAt": null,
+      "_id": {
+        "$oid": "672262384ce9d508620900be"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2024-10-30T16:38:10.399Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-31T19:20:37.717Z"
+  },
+  "__v": 0
+}]
