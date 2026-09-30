@@ -1,5 +1,5 @@
 // src/components/AdminTaskTable.jsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useSwipeable } from 'react-swipeable';
 import axios from '../utils/api';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
@@ -274,7 +275,7 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
     }
   };
 
-  const [userTasks, unassignedTasks, pendingTasks] = useMemo(() => {
+  const [userTasks, unassignedTasks, pendingTasks, otherUserTasks] = useMemo(() => {
     const userTasks = tasks.filter(task => 
       task.assignedTo && 
       (task.assignedTo._id === currentUser._id || task.assignedTo === currentUser._id) &&
@@ -286,18 +287,61 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
       (task.assignedTo && task.assignedTo.name === "Unassigned")
     );
     const pendingTasks = tasks.filter(task => task.status === 'pending_approval');
-    return [userTasks, unassignedTasks, pendingTasks];
+    const otherUserTasks = tasks.filter(task => 
+      task.assignedTo && 
+      task.assignedTo !== "Unassigned" && 
+      task.assignedTo._id !== currentUser._id && 
+      task.assignedTo !== currentUser._id &&
+      task.assignedTo.name !== "Unassigned" &&
+      task.status === 'active'
+    );
+    return [userTasks, unassignedTasks, pendingTasks, otherUserTasks];
   }, [tasks, currentUser]);
 
   const tabsToShow = useMemo(() => [
     { label: "My Tasks", content: userTasks },
     { label: "Unassigned", content: unassignedTasks },
+    { label: "Assigned to Others", content: otherUserTasks },
     ...(pendingTasks.length > 0 ? [{ label: "Pending", content: pendingTasks }] : [])
-  ], [userTasks, unassignedTasks, pendingTasks]);
+  ], [userTasks, unassignedTasks, otherUserTasks, pendingTasks]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => setTabValue((prev) => Math.min(prev + 1, tabsToShow.length - 1)),
+    onSwipedRight: () => setTabValue((prev) => Math.max(prev - 1, 0)),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true,
+  });
+
+  // Stop the gesture from bubbling to the page-level swipe-to-navigate handler.
+  // Must happen at mousedown/touchstart time, since state updates from native
+  // listeners flush synchronously (legacy ReactDOM.render) and can detach the
+  // swiped element before any later "was this within the tab region" check runs.
+  const swipeTouchedNodes = useRef(new WeakSet());
+  const setSwipeRef = useCallback((node) => {
+    swipeHandlers.ref(node);
+    if (node && !swipeTouchedNodes.current.has(node)) {
+      node.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      swipeTouchedNodes.current.add(node);
+    }
+  }, [swipeHandlers]);
+  const handleSwipeMouseDown = (e) => {
+    e.stopPropagation();
+    swipeHandlers.onMouseDown?.(e);
+  };
+
+  // Stop touch/mouse drags on the scrollable tabs bar from bubbling to the
+  // page-level swipe-to-navigate handler, so they scroll the tab strip instead.
+  const tabsBarTouchedNodes = useRef(new WeakSet());
+  const setTabsBarRef = useCallback((node) => {
+    if (node && !tabsBarTouchedNodes.current.has(node)) {
+      node.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      tabsBarTouchedNodes.current.add(node);
+    }
+  }, []);
 
   const refreshTasks = useCallback(async () => {
     try {
@@ -347,30 +391,45 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <Box sx={{ padding: 1 }}>
-        <LightTabs 
-          value={tabValue} 
-          onChange={handleTabChange} 
-          aria-label="task tabs"
-          sx={{ 
-            '& .MuiTabs-indicator': {
-              backgroundColor: theme.palette.secondary.main,
-            },
-            '& .MuiTabs-flexContainer': {
-              backgroundColor: 'transparent',
-              boxShadow: 'none',
-            },
-            '& .MuiTab-root': {
-              minWidth: 'auto',
-              padding: '6px 12px',
-            },
-          }}
+        <Box
+          ref={setTabsBarRef}
+          onMouseDown={(e) => e.stopPropagation()}
+          data-swipe-region="tasks"
+          sx={{ touchAction: 'pan-x' }}
         >
-          {tabsToShow.map((tab, index) => (
-            <LightTab key={index} label={tab.label} sx={{ color: theme.palette.text.primary }} />
-          ))}
-        </LightTabs>
+          <LightTabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="task tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{ 
+              '& .MuiTabs-indicator': {
+                backgroundColor: theme.palette.secondary.main,
+              },
+              '& .MuiTabs-flexContainer': {
+                backgroundColor: 'transparent',
+                boxShadow: 'none',
+              },
+              '& .MuiTab-root': {
+                minWidth: 'auto',
+                padding: '6px 12px',
+              },
+            }}
+          >
+            {tabsToShow.map((tab, index) => (
+              <LightTab key={index} label={tab.label} sx={{ color: theme.palette.text.primary }} />
+            ))}
+          </LightTabs>
+        </Box>
 
-        <Box sx={{ mt: 2 }}>
+        <Box
+          ref={setSwipeRef}
+          onMouseDown={handleSwipeMouseDown}
+          data-swipe-region="tasks"
+          sx={{ mt: 2, touchAction: 'pan-y' }}
+        >
           {tabsToShow[tabValue] && tabsToShow[tabValue].content.map((task) => (
             <TaskCard
               key={task._id ? task._id.toString() : task.id}
@@ -379,7 +438,7 @@ const AdminTaskTable = ({ tasks, setTasks, currentUser }) => {
               onDelete={handleDeleteTask}
               currentUser={currentUser}
               refreshTasks={refreshTasks}
-              showAssignedTo={tabValue === 2}
+              showAssignedTo={tabsToShow[tabValue].label !== "Unassigned"}
             />
           ))}
         </Box>

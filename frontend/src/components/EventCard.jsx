@@ -41,7 +41,7 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents }) => {
               letterSpacing: '-.25px'
             }}
           >
-            {event.name}
+            {event.title}
           </Typography>
           <Box>
             {currentUser && currentUser.isAdmin && (
@@ -74,7 +74,7 @@ const EventCard = ({ event, onEdit, onDelete, currentUser, refreshEvents }) => {
           Date: {new Date(event.date).toLocaleDateString()}
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>
-          Time: {event.time}
+          Time: {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>
           Location: {event.location}

@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/api'; // Axios instance for API calls
 import AdminTaskTable from '../components/AdminTaskTable'; // Admin task management
@@ -25,6 +25,7 @@ import { useSwipeable } from 'react-swipeable';
 import ActiveMessageDialog from '../components/ActiveMessageDialog';
 import MessagesDialog from '../components/MessagesDialog';
 import { formatAvatarUrl } from '../utils/avatarHelper';
+import { applyBrandingFromUser, applyBrandingToDocument, getDefaultBranding } from '../utils/branding';
 
 const theme = createTheme({
   palette: {
@@ -86,10 +87,23 @@ const Dashboard = () => {
   const [messagesDialogOpen, setMessagesDialogOpen] = useState(false);
   const [recentMessage, setRecentMessage] = useState(null);
   const [hasUnviewedMessages, setHasUnviewedMessages] = useState(false);
-  const [myEvents, setMyEvents] = useState([]);
+  const [appBackgroundUrl, setAppBackgroundUrl] = useState('');
+  const isSuperAdmin = user?.isSuperAdmin === true;
+
+  // Upcoming events for the whole group, visible to every user - not just the creator/attendees
+  const upcomingEvents = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter((event) => new Date(event.date) >= now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [events]);
 
   const handlers = useSwipeable({
-    onSwipedLeft: () => navigate('/events'),
+    onSwipedLeft: (eventData) => {
+      // Let nested task-tab swipe regions handle their own gesture instead of navigating away
+      if (eventData.event?.target?.closest?.('[data-swipe-region]')) return;
+      navigate('/events');
+    },
     preventDefaultTouchmoveEvent: true,
     trackMouse: true
   });
@@ -111,20 +125,19 @@ const Dashboard = () => {
 
         setUser(userResponse.data);
         setIsAdmin(userResponse.data.isAdmin);
+        applyBrandingFromUser(userResponse.data);
+        setAppBackgroundUrl(userResponse.data?.group?.branding?.appBackgroundUrl || '');
         console.log('User data fetched:', userResponse.data);
+
+        if (userResponse.data?.isSuperAdmin) {
+          return;
+        }
 
         try {
           const tasksResponse = await axios.get('/tasks', { withCredentials: true });
           setTasks(tasksResponse.data);
         } catch (error) {
           console.error('Error fetching tasks:', error);
-        }
-
-        try {
-          const myEventsResponse = await axios.get('/events/my-events', { withCredentials: true });
-          setMyEvents(myEventsResponse.data);
-        } catch (error) {
-          console.error('Error fetching events:', error);
         }
 
         try {
@@ -170,6 +183,7 @@ const Dashboard = () => {
   const handleLogout = async () => {
     try {
       await axios.post('/auth/logout', {}, { withCredentials: true });
+      applyBrandingToDocument(getDefaultBranding());
       setUser(null); // Clear user state on logout
       navigate('/'); // Redirect to StartScreen after logout
     } catch (error) {
@@ -206,19 +220,28 @@ const Dashboard = () => {
   };
 
   const menuItems = [
-    { text: 'View Profile', onClick: () => { navigate('/profile'); setMenuOpen(false); } },
-    { text: 'Leaderboard', onClick: () => { navigate('/leaderboard'); setMenuOpen(false); } },
-    { text: 'All Tasks', onClick: () => { navigate('/all-tasks'); setMenuOpen(false); } },
-    { text: 'All Messages', onClick: () => { navigate('/messages'); setMenuOpen(false); } },
-    ...(isAdmin ? [
-      { text: 'Create Event', onClick: () => { setEventFormOpen(true); setMenuOpen(false); } },
-      { text: 'Register User', onClick: () => { navigate('/register-user'); setMenuOpen(false); } },
-      { text: 'Manage Users', onClick: () => { navigate('/manage-users'); setMenuOpen(false); } },
-      ...(user?.isSuperAdmin ? [{ text: 'Manage Groups', onClick: () => { navigate('/manage-groups'); setMenuOpen(false); } }] : []),
-      { text: 'Create Message', onClick: () => { setMessageFormOpen(true); setMenuOpen(false); } },
-      { text: 'Manage Messages', onClick: () => { navigate('/manage-messages'); setMenuOpen(false); } },
-      { text: 'Completed Tasks', onClick: () => { navigate('/completed-tasks'); setMenuOpen(false); } }
-    ] : []),
+    ...(isSuperAdmin
+      ? [
+          { text: 'View Profile', onClick: () => { navigate('/profile'); setMenuOpen(false); } },
+          { text: 'Superadmin Console', onClick: () => { navigate('/superadmin-console'); setMenuOpen(false); } },
+          { text: 'Manage Users', onClick: () => { navigate('/manage-users'); setMenuOpen(false); } },
+          { text: 'Manage Groups', onClick: () => { navigate('/manage-groups'); setMenuOpen(false); } },
+          { text: 'Register User', onClick: () => { navigate('/register-user'); setMenuOpen(false); } }
+        ]
+      : [
+          { text: 'View Profile', onClick: () => { navigate('/profile'); setMenuOpen(false); } },
+          { text: 'Leaderboard', onClick: () => { navigate('/leaderboard'); setMenuOpen(false); } },
+          { text: 'All Tasks', onClick: () => { navigate('/all-tasks'); setMenuOpen(false); } },
+          { text: 'All Messages', onClick: () => { navigate('/messages'); setMenuOpen(false); } },
+          ...(isAdmin ? [
+            { text: 'Create Event', onClick: () => { setEventFormOpen(true); setMenuOpen(false); } },
+            { text: 'Register User', onClick: () => { navigate('/register-user'); setMenuOpen(false); } },
+            { text: 'Manage Users', onClick: () => { navigate('/manage-users'); setMenuOpen(false); } },
+            { text: 'Create Message', onClick: () => { setMessageFormOpen(true); setMenuOpen(false); } },
+            { text: 'Manage Messages', onClick: () => { navigate('/manage-messages'); setMenuOpen(false); } },
+            { text: 'Completed Tasks', onClick: () => { navigate('/completed-tasks'); setMenuOpen(false); } }
+          ] : [])
+        ]),
     { text: 'Logout', onClick: handleLogout },
   ];
 
@@ -233,6 +256,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    if (isSuperAdmin) {
+      return;
+    }
+
     const fetchEvents = async () => {
       try {
         console.log('Fetching events...');
@@ -251,13 +278,17 @@ const Dashboard = () => {
     };
 
     fetchEvents();
-  }, []);
+  }, [isSuperAdmin]);
 
   const handleEventScroll = (index) => {
     setCurrentEventIndex(index);
   };
 
   useEffect(() => {
+    if (isSuperAdmin) {
+      return;
+    }
+
     const checkEvents = async () => {
       try {
         const response = await axios.get('/events', { withCredentials: true });
@@ -268,7 +299,7 @@ const Dashboard = () => {
     };
 
     checkEvents();
-  }, []);
+  }, [isSuperAdmin]);
 
   const handleEventIconClick = async () => {
     try {
@@ -342,7 +373,7 @@ const Dashboard = () => {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          backgroundImage: `url(${backgroundImage})`,
+          backgroundImage: appBackgroundUrl ? `url(${appBackgroundUrl})` : `url(${backgroundImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -387,38 +418,42 @@ const Dashboard = () => {
             >
               <MenuIcon />
             </IconButton>
-            <IconButton
-              color="inherit"
-              onClick={handleEventIconClick}
-              sx={{ ml: 1 }}
-            >
-              <Badge
-                variant="dot"
-                color="error"
-                invisible={!hasNewEvents}
-              >
-                <EventIcon />
-              </Badge>
-            </IconButton>
-            <IconButton
-              color="inherit"
-              onClick={handleMessagesClick}
-              sx={{ 
-                ml: 1,
-                color: hasUnviewedMessages ? '#fff' : 'rgba(255, 255, 255, 0.5)',
-                '&:hover': {
-                  color: '#fff'
-                }
-              }}
-            >
-              <Badge
-                variant="dot"
-                color="error"
-                invisible={!hasUnviewedMessages}
-              >
-                <MessageIcon />
-              </Badge>
-            </IconButton>
+            {!isSuperAdmin ? (
+              <>
+                <IconButton
+                  color="inherit"
+                  onClick={handleEventIconClick}
+                  sx={{ ml: 1 }}
+                >
+                  <Badge
+                    variant="dot"
+                    color="error"
+                    invisible={!hasNewEvents}
+                  >
+                    <EventIcon />
+                  </Badge>
+                </IconButton>
+                <IconButton
+                  color="inherit"
+                  onClick={handleMessagesClick}
+                  sx={{ 
+                    ml: 1,
+                    color: hasUnviewedMessages ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+                    '&:hover': {
+                      color: '#fff'
+                    }
+                  }}
+                >
+                  <Badge
+                    variant="dot"
+                    color="error"
+                    invisible={!hasUnviewedMessages}
+                  >
+                    <MessageIcon />
+                  </Badge>
+                </IconButton>
+              </>
+            ) : null}
           </Toolbar>
         </AppBar>
 
@@ -459,53 +494,70 @@ const Dashboard = () => {
               fontWeight: 'bold',
               textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
             }}>
-              My Dashboard
+              {isSuperAdmin ? 'Superadmin Home' : 'My Dashboard'}
             </Typography>
           </Box>
-          
-          <Box>
-            <BibleVerseScroll />
-          </Box>
 
-          <Box sx={glassyBoxStyle}>
-            {isAdmin ? (
-              <AdminTaskTable tasks={tasks} setTasks={setTasks} currentUser={user} />
-            ) : (
-              <TaskList tasks={tasks} setTasks={setTasks} currentUser={user} />
-            )}
-          </Box>
-
-          {/* Only render MyEventsList if there are events */}
-          {myEvents.length > 0 && (
+          {isSuperAdmin ? (
             <Box sx={glassyBoxStyle}>
-              <MyEventsList events={myEvents} />
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                Group Administration
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Use this account for group setup, user management, and per-group branding only.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button variant="contained" onClick={() => navigate('/superadmin-console')}>
+                  Open Superadmin Console
+                </Button>
+                <Button variant="contained" color="secondary" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </Box>
             </Box>
+          ) : (
+            <>
+              <Box>
+                <BibleVerseScroll />
+              </Box>
+
+              <Box sx={glassyBoxStyle}>
+                {isAdmin ? (
+                  <AdminTaskTable tasks={tasks} setTasks={setTasks} currentUser={user} />
+                ) : (
+                  <TaskList tasks={tasks} setTasks={setTasks} currentUser={user} />
+                )}
+              </Box>
+
+              {/* Only render events section if there are upcoming events */}
+              {upcomingEvents.length > 0 && (
+                <Box sx={glassyBoxStyle}>
+                  <MyEventsList events={upcomingEvents} title="Upcoming Events" />
+                </Box>
+              )}
+            </>
           )}
         </Container>
 
-        <EventForm 
-          open={eventFormOpen} 
-          handleClose={() => setEventFormOpen(false)} 
-          onSubmit={async (eventData) => {
-            try {
-              const response = await axios.post('/events', eventData);
-              await refreshFeed();
-              setEventFormOpen(false);
-            } catch (error) {
-              console.error('Error creating event:', error);
-            }
-          }}
-        />
-        <MessageForm open={messageFormOpen} handleClose={() => setMessageFormOpen(false)} refreshMessages={refreshFeed} />
-        <ActiveMessageDialog
-          open={messageDialogOpen}
-          onClose={() => setMessageDialogOpen(false)}
-          message={activeMessage}
-        />
-        <MessagesDialog
-          open={messagesDialogOpen}
-          onClose={() => setMessagesDialogOpen(false)}
-        />
+        {!isSuperAdmin ? (
+          <>
+            <EventForm 
+              open={eventFormOpen} 
+              handleClose={() => setEventFormOpen(false)} 
+              refreshEvents={refreshFeed}
+            />
+            <MessageForm open={messageFormOpen} handleClose={() => setMessageFormOpen(false)} refreshMessages={refreshFeed} />
+            <ActiveMessageDialog
+              open={messageDialogOpen}
+              onClose={() => setMessageDialogOpen(false)}
+              message={activeMessage}
+            />
+            <MessagesDialog
+              open={messagesDialogOpen}
+              onClose={() => setMessagesDialogOpen(false)}
+            />
+          </>
+        ) : null}
       </Box>
     </ThemeProvider>
   );

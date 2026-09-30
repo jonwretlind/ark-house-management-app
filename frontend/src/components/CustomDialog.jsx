@@ -12,6 +12,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 
 const CustomDialog = ({ open, onClose, onSubmit, title, children }) => {
+  // Native form submit reloads the page; stop that before delegating to the caller.
+  const handleFormSubmit = (event) => {
+    event.preventDefault();
+    onSubmit?.(event);
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -52,7 +58,7 @@ const CustomDialog = ({ open, onClose, onSubmit, title, children }) => {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleFormSubmit}>
         <DialogContent sx={{ mt: 2 }}>
           {children}
         </DialogContent>

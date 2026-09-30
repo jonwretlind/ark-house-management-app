@@ -5,6 +5,26 @@ import { authenticateUser, requireSuperAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
+const defaultBranding = {
+  logoUrl: '',
+  loginBackgroundUrl: '',
+  appBackgroundUrl: '',
+  primaryColor: '#1a4731',
+  secondaryColor: '#d35400',
+  accentColor: '#2c3e50',
+  textColor: '#ecf0f1'
+};
+
+const normalizeBranding = (brandingInput = {}) => ({
+  logoUrl: (brandingInput.logoUrl || '').trim(),
+  loginBackgroundUrl: (brandingInput.loginBackgroundUrl || '').trim(),
+  appBackgroundUrl: (brandingInput.appBackgroundUrl || '').trim(),
+  primaryColor: (brandingInput.primaryColor || defaultBranding.primaryColor).trim(),
+  secondaryColor: (brandingInput.secondaryColor || defaultBranding.secondaryColor).trim(),
+  accentColor: (brandingInput.accentColor || defaultBranding.accentColor).trim(),
+  textColor: (brandingInput.textColor || defaultBranding.textColor).trim()
+});
+
 router.use(authenticateUser);
 router.use(requireSuperAdmin);
 
@@ -20,7 +40,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { name, code, location = '', isActive = true } = req.body;
+    const { name, code, location = '', isActive = true, branding } = req.body;
 
     if (!name || !code) {
       return res.status(400).json({ message: 'Name and code are required' });
@@ -37,6 +57,7 @@ router.post('/', async (req, res) => {
       code: normalizedCode,
       location: location.trim(),
       isActive,
+      branding: normalizeBranding(branding),
       createdBy: req.user._id
     });
 
@@ -49,12 +70,13 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { name, code, location, isActive } = req.body;
+    const { name, code, location, isActive, branding } = req.body;
     const update = {};
 
     if (name !== undefined) update.name = name;
     if (location !== undefined) update.location = location;
     if (isActive !== undefined) update.isActive = isActive;
+    if (branding !== undefined) update.branding = normalizeBranding(branding);
 
     if (code !== undefined) {
       const normalizedCode = code.trim().toLowerCase();

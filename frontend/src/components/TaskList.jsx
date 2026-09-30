@@ -1,8 +1,9 @@
 // src/components/TaskList.jsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Box, Typography, IconButton, Tabs, Tab, styled, useTheme } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useSwipeable } from 'react-swipeable';
 import axios from '../utils/api';
 import TaskCard from './TaskCard';
 
@@ -71,33 +72,82 @@ const TaskList = ({ tasks, setTasks, currentUser }) => {
     { label: "Unassigned", content: unassignedTasks },
   ];
 
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => setTabValue((prev) => Math.min(prev + 1, tabsToShow.length - 1)),
+    onSwipedRight: () => setTabValue((prev) => Math.max(prev - 1, 0)),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true,
+  });
+
+  // Stop the gesture from bubbling to the page-level swipe-to-navigate handler.
+  // Must happen at mousedown/touchstart time, since state updates from native
+  // listeners flush synchronously (legacy ReactDOM.render) and can detach the
+  // swiped element before any later "was this within the tab region" check runs.
+  const swipeTouchedNodes = useRef(new WeakSet());
+  const setSwipeRef = useCallback((node) => {
+    swipeHandlers.ref(node);
+    if (node && !swipeTouchedNodes.current.has(node)) {
+      node.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      swipeTouchedNodes.current.add(node);
+    }
+  }, [swipeHandlers]);
+  const handleSwipeMouseDown = (e) => {
+    e.stopPropagation();
+    swipeHandlers.onMouseDown?.(e);
+  };
+
+  // Stop touch/mouse drags on the scrollable tabs bar from bubbling to the
+  // page-level swipe-to-navigate handler, so they scroll the tab strip instead.
+  const tabsBarTouchedNodes = useRef(new WeakSet());
+  const setTabsBarRef = useCallback((node) => {
+    if (node && !tabsBarTouchedNodes.current.has(node)) {
+      node.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      tabsBarTouchedNodes.current.add(node);
+    }
+  }, []);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Box sx={{ padding: 1 }}>
-        <LightTabs 
-          value={tabValue} 
-          onChange={handleTabChange} 
-          aria-label="task tabs"
-          sx={{ 
-            '& .MuiTabs-indicator': {
-              backgroundColor: theme.palette.secondary.main,
-            },
-            '& .MuiTabs-flexContainer': {
-              backgroundColor: 'transparent',
-              boxShadow: 'none',
-            },
-            '& .MuiTab-root': {
-              minWidth: 'auto',
-              padding: '6px 12px',
-            },
-          }}
+        <Box
+          ref={setTabsBarRef}
+          onMouseDown={(e) => e.stopPropagation()}
+          data-swipe-region="tasks"
+          sx={{ touchAction: 'pan-x' }}
         >
-          {tabsToShow.map((tab, index) => (
-            <LightTab key={index} label={tab.label} sx={{ color: theme.palette.text.primary }} />
-          ))}
-        </LightTabs>
+          <LightTabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="task tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{ 
+              '& .MuiTabs-indicator': {
+                backgroundColor: theme.palette.secondary.main,
+              },
+              '& .MuiTabs-flexContainer': {
+                backgroundColor: 'transparent',
+                boxShadow: 'none',
+              },
+              '& .MuiTab-root': {
+                minWidth: 'auto',
+                padding: '6px 12px',
+              },
+            }}
+          >
+            {tabsToShow.map((tab, index) => (
+              <LightTab key={index} label={tab.label} sx={{ color: theme.palette.text.primary }} />
+            ))}
+          </LightTabs>
+        </Box>
 
-        <Box sx={{ mt: 2 }}>
+        <Box
+          ref={setSwipeRef}
+          onMouseDown={handleSwipeMouseDown}
+          data-swipe-region="tasks"
+          sx={{ mt: 2, touchAction: 'pan-y' }}
+        >
           {tabsToShow[tabValue] && tabsToShow[tabValue].content.map((task) => (
             <TaskItem
               key={task._id ? task._id.toString() : task.id}

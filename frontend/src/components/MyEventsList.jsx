@@ -3,7 +3,7 @@ import { Box, Typography, Card, CardContent } from '@mui/material';
 import EventIcon from '@mui/icons-material/Event';
 import { useTheme } from '@mui/material/styles';
 
-const MyEventsList = ({ events }) => {
+const MyEventsList = ({ events, title = 'My Events' }) => {
   const theme = useTheme();
 
   if (events.length === 0) {
@@ -12,7 +12,7 @@ const MyEventsList = ({ events }) => {
 
   return (
     <Box sx={{ mt: 4, px: 1 }}> {/* Added px: 1 for left and right padding */}
-      <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>My Events</Typography>
+      <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>{title}</Typography>
       {events.map((event) => (
         <Card key={event._id} sx={{ 
           mb: 2, 
@@ -34,7 +34,7 @@ const MyEventsList = ({ events }) => {
                   letterSpacing: '-.25px'
                 }}
               >
-                {event.name}
+                {event.title}
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 2 }}>
@@ -44,7 +44,7 @@ const MyEventsList = ({ events }) => {
               Date: {new Date(event.date).toLocaleDateString()}
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)', mb: 0.5 }}>
-              Time: {event.time}
+              Time: {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 0.7)' }}>
               Location: {event.location}

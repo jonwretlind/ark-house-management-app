@@ -25,7 +25,8 @@ const serializeUser = (userDoc) => ({
         id: userDoc.groupId._id,
         name: userDoc.groupId.name,
         code: userDoc.groupId.code,
-        location: userDoc.groupId.location || ''
+        location: userDoc.groupId.location || '',
+        branding: userDoc.groupId.branding || null
       }
     : null
 });
@@ -77,7 +78,7 @@ router.get('/leaderboard', async (req, res) => {
 
     const users = await User.find(query)
       .select('name accountBalance avatarUrl groupId role isAdmin')
-      .populate('groupId', 'name code location')
+      .populate('groupId', 'name code location branding')
       .sort({ accountBalance: -1 });
 
     const formattedUsers = users.map((user) => ({
@@ -96,7 +97,7 @@ router.get('/profile', async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select('-passwordHash')
-      .populate('groupId', 'name code location');
+      .populate('groupId', 'name code location branding');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -142,7 +143,7 @@ router.put('/profile', async (req, res) => {
 
     const populatedUser = await User.findById(user._id)
       .select('-passwordHash')
-      .populate('groupId', 'name code location');
+      .populate('groupId', 'name code location branding');
 
     res.json(serializeUser(populatedUser));
   } catch (error) {
@@ -210,7 +211,7 @@ router.get('/', async (req, res) => {
 
     const users = await User.find(query)
       .select('-passwordHash')
-      .populate('groupId', 'name code location');
+      .populate('groupId', 'name code location branding');
 
     res.json(users.map(serializeUser));
   } catch (error) {
@@ -273,7 +274,7 @@ router.post('/', async (req, res) => {
 
     const populatedUser = await User.findById(createdUser._id)
       .select('-passwordHash')
-      .populate('groupId', 'name code location');
+      .populate('groupId', 'name code location branding');
 
     res.status(201).json(serializeUser(populatedUser));
   } catch (error) {
@@ -290,7 +291,7 @@ router.get('/:id', async (req, res) => {
 
     const user = await User.findById(req.params.id)
       .select('-passwordHash')
-      .populate('groupId', 'name code location');
+      .populate('groupId', 'name code location branding');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -366,7 +367,7 @@ router.put('/:id', async (req, res) => {
 
     const populated = await User.findById(target._id)
       .select('-passwordHash')
-      .populate('groupId', 'name code location');
+      .populate('groupId', 'name code location branding');
 
     res.json(serializeUser(populated));
   } catch (error) {

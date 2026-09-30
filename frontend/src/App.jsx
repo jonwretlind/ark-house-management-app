@@ -14,6 +14,7 @@ import ManageMessages from './pages/ManageMessages';
 import MessagesScreen from './pages/MessagesScreen';
 import ProfileScreen from './pages/ProfileScreen';
 import ManageGroupsScreen from './pages/ManageGroupsScreen';
+import SuperadminConsole from './pages/SuperadminConsole';
 
 const App = () => {
   return (
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="/messages" element={<MessagesScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/manage-groups" element={<ManageGroupsScreen />} />
+        <Route path="/superadmin-console" element={<SuperadminConsole />} />
       </Routes>
     </>
   );

@@ -1,6 +1,18 @@
 // src/pages/StartScreen.jsx
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, Box, TextField, Alert, CircularProgress } from '@mui/material';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  TextField,
+  Alert,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select
+} from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import axios from '../utils/api'; // Axios instance for API calls
 import { useNavigate } from 'react-router-dom'; // For navigation after login
@@ -8,17 +20,32 @@ import Logo from '../components/Logo';
 // Add this import
 import backgroundImage from '../../assets/screen1.png';
 import theme from '../theme';
+import { applyBrandingFromUser, applyBrandingToDocument, getDefaultBranding } from '../utils/branding';
 
 const StartScreen = () => {
   const [email, setEmail] = useState(''); // Track email input
   const [password, setPassword] = useState(''); // Track password input
   const [groupCode, setGroupCode] = useState('');
+  const [groups, setGroups] = useState([]);
   const [error, setError] = useState(null); // Handle login errors
   const [loading, setLoading] = useState(true); // Add loading state
+  const [logoUrl, setLogoUrl] = useState('');
+  const [loginBackgroundUrl, setLoginBackgroundUrl] = useState('');
   const navigate = useNavigate(); // Hook for navigation
 
   // Check if user is already logged in and redirect to dashboard
   useEffect(() => {
+    const loadGroups = async () => {
+      try {
+        const response = await axios.get('/auth/groups');
+        setGroups(Array.isArray(response.data) ? response.data : []);
+      } catch (groupError) {
+        console.error('Error loading groups:', groupError);
+      }
+    };
+
+    loadGroups();
+
     const checkSession = async () => {
       try {
         console.log('Checking session...');
@@ -26,10 +53,14 @@ const StartScreen = () => {
         console.log('Session check response:', response.data);
         
         if (response.data) {
+          applyBrandingFromUser(response.data);
+          setLogoUrl(response.data?.group?.branding?.logoUrl || '');
+          setLoginBackgroundUrl(response.data?.group?.branding?.loginBackgroundUrl || '');
           navigate('/dashboard');
         }
       } catch (error) {
         console.log('No active session:', error);
+        applyBrandingToDocument(getDefaultBranding());
         setLoading(false);
       }
     };
@@ -58,6 +89,9 @@ const StartScreen = () => {
       console.log('Login response:', response.data); // Log the response
 
       if (response.data && response.data.user) {
+        applyBrandingFromUser(response.data.user);
+        setLogoUrl(response.data?.user?.group?.branding?.logoUrl || '');
+        setLoginBackgroundUrl(response.data?.user?.group?.branding?.loginBackgroundUrl || '');
         navigate('/dashboard');
       } else {
         setError('Invalid response from server');
@@ -65,7 +99,7 @@ const StartScreen = () => {
     } catch (error) {
       console.error('Login error details:', error.response?.data); // Log detailed error
       if (error.response?.status === 409 && error.response?.data?.requiresGroupCode) {
-        setError('This email exists in multiple groups. Enter your group code and try again.');
+        setError('This email exists in multiple groups. Select a group and try again.');
       } else {
         setError(error.response?.data?.message || 'Invalid credentials');
       }
@@ -95,7 +129,7 @@ const StartScreen = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundImage: `url(${backgroundImage})`,
+          backgroundImage: loginBackgroundUrl ? `url(${loginBackgroundUrl})` : `url(${backgroundImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -115,7 +149,7 @@ const StartScreen = () => {
             marginBottom: 4, // Decrease the margin
           }}
         >
-          <Logo />
+          <Logo logoUrl={logoUrl} />
         </Box>
 
         <Container maxWidth="sm">
@@ -164,36 +198,38 @@ const StartScreen = () => {
                   },
                 }}
               />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Group Code (Optional)"
-                variant="outlined"
-                value={groupCode}
-                onChange={(e) => setGroupCode(e.target.value)}
-                helperText="Required only if your email exists in multiple house groups"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused fieldset': {
-                      borderColor: theme.palette.secondary.main,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: theme.palette.secondary.main,
-                  },
-                }}
-              />
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="group-select-label">Group (Optional)</InputLabel>
+                <Select
+                  labelId="group-select-label"
+                  label="Group (Optional)"
+                  value={groupCode}
+                  onChange={(e) => setGroupCode(e.target.value)}
+                >
+                  <MenuItem value="">
+                    Superadmin Console (No Group)
+                  </MenuItem>
+                  {groups.map((group) => (
+                    <MenuItem key={group.id || group._id} value={group.code}>
+                      {group.name}{group.location ? ` - ${group.location}` : ''}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="caption" sx={{ display: 'block', textAlign: 'left', opacity: 0.8 }}>
+                Choose a group to enter that house context, or keep "No Group" for superadmin console access.
+              </Typography>
               {error && <Alert severity="error">{error}</Alert>}
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                color="secondary"
+                color="primary"
                 size="large"
                 sx={{ 
                   mt: 2,
                   '&:hover': {
-                    backgroundColor: theme.palette.secondary.dark,
+                    backgroundColor: theme.palette.primary.dark,
                   },
                 }}
               >

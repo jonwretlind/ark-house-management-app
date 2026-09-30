@@ -22,10 +22,59 @@ const serializeUser = (userDoc) => ({
         id: userDoc.groupId._id,
         name: userDoc.groupId.name,
         code: userDoc.groupId.code,
-        location: userDoc.groupId.location || ''
+        location: userDoc.groupId.location || '',
+        branding: userDoc.groupId.branding || null
       }
     : null,
   avatarUrl: userDoc.avatarUrl || null
+});
+
+const withSelectedGroup = (payload, selectedGroup) => {
+  if (!selectedGroup) return payload;
+  return {
+    ...payload,
+    group: {
+      id: selectedGroup._id,
+      name: selectedGroup.name,
+      code: selectedGroup.code,
+      location: selectedGroup.location || '',
+      branding: selectedGroup.branding || null
+    }
+  };
+};
+
+const resolveUserByPassword = async (candidates, password) => {
+  for (const candidate of candidates) {
+    try {
+      const isMatch = await candidate.comparePassword(password);
+      if (isMatch) {
+        return candidate;
+      }
+    } catch (error) {
+      console.error('Password comparison error:', error);
+    }
+  }
+
+  return null;
+};
+
+// GET /api/auth/groups - Public list of active groups for login selection
+router.get('/groups', async (_req, res) => {
+  try {
+    const groups = await Group.find({ isActive: true })
+      .select('name code location')
+      .sort({ name: 1 });
+
+    res.json(groups.map((group) => ({
+      id: group._id,
+      name: group.name,
+      code: group.code,
+      location: group.location || ''
+    })));
+  } catch (error) {
+    console.error('Error fetching login groups:', error);
+    res.status(500).json({ message: 'Error fetching groups' });
+  }
 });
 
 // GET /api/auth/me - Get current user
@@ -33,12 +82,17 @@ router.get('/me', authenticateUser, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .select('-passwordHash')
-      .populate('groupId', 'name code location isActive');
+      .populate('groupId', 'name code location isActive branding');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(serializeUser(user));
+    let selectedGroup = null;
+    if (user.role === 'superadmin' && req.auth?.groupId) {
+      selectedGroup = await Group.findById(req.auth.groupId).select('name code location branding isActive');
+    }
+
+    res.json(withSelectedGroup(serializeUser(user), selectedGroup));
   } catch (error) {
     console.error('Error in /me route:', error);
     res.status(500).json({ 
@@ -68,20 +122,52 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    const loginQuery = {
-      email: normalizedEmail,
-      ...(group ? { groupId: group._id } : {})
-    };
-
-    const candidates = await User.find(loginQuery)
-      .populate('groupId', 'name code location isActive')
-      .limit(5);
+    let candidates;
+    if (group) {
+      candidates = await User.find({
+        email: normalizedEmail,
+        $or: [{ groupId: group._id }, { role: 'superadmin' }]
+      })
+        .populate('groupId', 'name code location isActive branding')
+        .sort({ role: 1 });
+    } else {
+      candidates = await User.find({ email: normalizedEmail })
+        .populate('groupId', 'name code location isActive branding')
+        .sort({ role: 1 });
+    }
 
     if (!candidates.length) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     if (!group && candidates.length > 1) {
+      const superadminCandidate = candidates.find(candidate => candidate.role === 'superadmin');
+      if (superadminCandidate) {
+        const superadminMatch = await resolveUserByPassword([superadminCandidate], password);
+        if (superadminMatch) {
+          const tokenPayload = {
+            id: superadminMatch._id,
+            role: superadminMatch.role,
+            isAdmin: superadminMatch.isAdmin,
+            groupId: null
+          };
+
+          const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+          res.cookie('token', token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/'
+          });
+
+          return res.json({
+            user: withSelectedGroup(serializeUser(superadminMatch), null)
+          });
+        }
+      }
+
       return res.status(409).json({
         message: 'Multiple users found for this email. Provide groupCode to log in.',
         requiresGroupCode: true,
@@ -95,27 +181,21 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const user = candidates[0];
+    const user = await resolveUserByPassword(candidates, password);
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     if (user.role !== 'superadmin' && !user.groupId) {
       return res.status(403).json({ message: 'User is not assigned to a group' });
-    }
-
-    try {
-      const isMatch = await user.comparePassword(password);
-      if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-    } catch (error) {
-      console.error('Password comparison error:', error);
-      return res.status(500).json({ message: 'Error verifying credentials' });
     }
 
     const tokenPayload = {
       id: user._id,
       role: user.role,
       isAdmin: user.isAdmin,
-      groupId: user.groupId?._id || null
+      groupId: user.role === 'superadmin' ? (group?._id || null) : (user.groupId?._id || null)
     };
 
     const token = jwt.sign(
@@ -134,7 +214,7 @@ router.post('/login', async (req, res) => {
     });
 
     res.json({
-      user: serializeUser(user)
+      user: withSelectedGroup(serializeUser(user), user.role === 'superadmin' ? group : null)
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -216,7 +296,7 @@ router.post('/register', authenticateUser, async (req, res) => {
     const savedUser = await newUser.save();
     const populatedUser = await User.findById(savedUser._id)
       .select('-passwordHash')
-      .populate('groupId', 'name code location isActive');
+      .populate('groupId', 'name code location isActive branding');
 
     res.status(201).json({ user: serializeUser(populatedUser) });
   } catch (error) {

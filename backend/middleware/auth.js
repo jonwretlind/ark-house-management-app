@@ -28,12 +28,13 @@ export const authenticateUser = async (req, res, next) => {
         }
 
         req.user = user;
+        const selectedGroupId = decoded.groupId || user.groupId?._id?.toString() || null;
         req.auth = {
             id: user._id.toString(),
             role: user.role || (user.isAdmin ? 'admin' : 'resident'),
             isAdmin: user.isAdmin === true,
             isSuperAdmin: user.role === 'superadmin',
-            groupId: user.groupId?._id?.toString() || null
+            groupId: selectedGroupId
         };
 
         next();

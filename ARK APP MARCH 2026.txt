@@ -1,5 +1,13 @@
 ARK APP MARCH 2026
 ---------------
-Admin User:
+SuperAdmin User:
 npm run seed:admin -- --name "Local Admin" --
 email "design@jonwretlind.com" --password "Admin@123!"
+
+Ark Location Admin:
+jcwretlind@aol.com
+ArkAdmin@123!
+
+Test User:
+joe@user.com
+TestUser@123!

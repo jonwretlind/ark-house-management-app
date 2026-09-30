@@ -1,4 +1,11 @@
 body {
+  --brand-primary: #1a4731;
+  --brand-secondary: #d35400;
+  --brand-accent: #2c3e50;
+  --brand-text: #ecf0f1;
+  --brand-logo-url: none;
+  --brand-login-bg-url: none;
+  --brand-app-bg-url: none;
   margin: 0px !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -10,4 +17,12 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.brand-login-background {
+  background-image: var(--brand-login-bg-url);
+}
+
+.brand-app-background {
+  background-image: var(--brand-app-bg-url);
 }

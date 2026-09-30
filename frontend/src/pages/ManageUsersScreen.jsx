@@ -1,5 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Typography, ThemeProvider, CssBaseline, AppBar, Toolbar, IconButton, Button } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  CssBaseline,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  ThemeProvider,
+  Toolbar,
+  Typography,
+  AppBar
+} from '@mui/material';
 import axios from '../utils/api';
 import UserCard from '../components/UserCard';
 import theme from '../theme';
@@ -13,48 +30,82 @@ const ManageUsersScreen = () => {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [userFormOpen, setUserFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCurrentUser();
-    fetchUsers();
+    initialize();
   }, []);
 
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await axios.get('/auth/me', { withCredentials: true });
-      setCurrentUser(response.data);
+  useEffect(() => {
+    if (currentUser?.isSuperAdmin) {
+      fetchUsers(selectedGroupId === 'all' ? '' : selectedGroupId);
+    }
+  }, [selectedGroupId]);
 
-      if (response.data?.isSuperAdmin) {
+  const initialize = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const meResponse = await axios.get('/auth/me', { withCredentials: true });
+      const me = meResponse.data;
+      setCurrentUser(me);
+
+      if (!me?.isAdmin) {
+        setError('Admin access is required to manage users.');
+        return;
+      }
+
+      if (me?.isSuperAdmin) {
         const groupsResponse = await axios.get('/groups', { withCredentials: true });
         setGroups(groupsResponse.data || []);
       }
-    } catch (error) {
-      console.error('Error fetching current user:', error);
+
+      await fetchUsers();
+    } catch (initError) {
+      setError(initError.response?.data?.message || 'Failed to load users page');
+      if (initError.response?.status === 401) {
+        navigate('/');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (groupId = '') => {
     try {
-      const response = await axios.get('/users', { withCredentials: true });
+      const query = groupId ? `?groupId=${groupId}` : '';
+      const response = await axios.get(`/users${query}`, { withCredentials: true });
       setUsers(response.data);
+      setError('');
     } catch (error) {
+      setUsers([]);
+      setError(error.response?.data?.message || 'Error fetching users');
       console.error('Error fetching users:', error);
     }
   };
 
   const handleEditUser = (user) => {
+    setError('');
+    setSuccess('');
     setSelectedUser(user);
     setUserFormOpen(true);
   };
 
   const handleDeleteUser = async (userId) => {
+    setError('');
+    setSuccess('');
     try {
       await axios.delete(`/users/${userId}`, { withCredentials: true });
-      fetchUsers();
+      setSuccess('User deleted successfully.');
+      fetchUsers(currentUser?.isSuperAdmin && selectedGroupId !== 'all' ? selectedGroupId : '');
     } catch (error) {
+      setError(error.response?.data?.message || 'Error deleting user');
       console.error('Error deleting user:', error);
     }
   };
@@ -62,6 +113,12 @@ const ManageUsersScreen = () => {
   const handleCloseForm = () => {
     setUserFormOpen(false);
     setSelectedUser(null);
+    setError('');
+  };
+
+  const refreshUsers = () => {
+    setSuccess(selectedUser ? 'User updated successfully.' : 'User created successfully.');
+    fetchUsers(currentUser?.isSuperAdmin && selectedGroupId !== 'all' ? selectedGroupId : '');
   };
 
   const glassyBoxStyle = {
@@ -73,6 +130,17 @@ const ManageUsersScreen = () => {
     padding: 2,
     marginBottom: 2,
   };
+
+  if (isLoading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -123,7 +191,39 @@ const ManageUsersScreen = () => {
           mb: 4,
           padding: '2rem',
         }}>
+          {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
+          {success ? <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert> : null}
+
+          {currentUser?.isSuperAdmin ? (
+            <Box sx={{ ...glassyBoxStyle, mb: 2 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="group-filter-label">Filter by Group</InputLabel>
+                  <Select
+                    labelId="group-filter-label"
+                    label="Filter by Group"
+                    value={selectedGroupId}
+                    onChange={(event) => setSelectedGroupId(event.target.value)}
+                  >
+                    <MenuItem value="all">All Groups</MenuItem>
+                    {groups.map((group) => (
+                      <MenuItem key={group._id} value={group._id}>
+                        {group.name} ({group.code})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button variant="outlined" onClick={() => navigate('/manage-groups')}>
+                  Manage Groups
+                </Button>
+              </Stack>
+            </Box>
+          ) : null}
+
           <Box sx={{ ...glassyBoxStyle, position: 'relative', minHeight: '200px' }}>
+            {!users.length ? (
+              <Typography sx={{ opacity: 0.8 }}>No users found for this view.</Typography>
+            ) : null}
             {users.map((user) => (
               <UserCard 
                 key={user._id} 
@@ -157,7 +257,7 @@ const ManageUsersScreen = () => {
         <UserForm 
           open={userFormOpen} 
           handleClose={handleCloseForm} 
-          refreshUsers={fetchUsers}
+          refreshUsers={refreshUsers}
           user={selectedUser}
           currentUser={currentUser}
           groups={groups}
